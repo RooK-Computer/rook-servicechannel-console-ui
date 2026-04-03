@@ -275,6 +275,8 @@ Die Zielrichtung fuer die Architektur ist:
 * **App-Shell**
   * Start, SDL-Lebenszyklus, Main Loop, Konfiguration, Umschaltung zwischen Normalbetrieb und Preview-/Testmodus
   * Umschaltung zwischen Zieldevice-Rendering und Entwicklungs-Rendering
+  * SDL2 bleibt die gemeinsame Plattformschicht fuer **KMS/DRM auf dem Zielgeraet** und **X/Wayland im Entwicklungsbetrieb**
+  * Preview und Normalbetrieb starten dieselbe Screen-Registry; sie unterscheiden sich nur in Datenquelle, Start-Intent und Laufzeitumgebung
 * **Navigation und Flow-Steuerung**
   * die konkrete Entscheidung ueber den **naechsten Screen** liegt primaer beim aktuellen Screen bzw. dessen Screen-Logik
   * wiederverwendbare Komponenten wie Fehler-Screens oder Dialoge navigieren **nicht selbst**
@@ -308,9 +310,11 @@ Die genaue Ordnerstruktur ist spaeter festzuziehen, aber das technische Zielbild
   * vermittelt zwischen Screen-Logik und Agent-/Service-Ports
 * `screens/`
   * je Screen eine klar abgegrenzte Einheit aus Logik und Darstellung
+  * alle produktiven Hauptscreens werden als **echte Screen-Module in `screens/`** implementiert
   * Screens geben Folgeaktionen als **Intent** an die App-Shell zurueck
   * innerhalb eines Screens sind **Logik** und **View** klar getrennt, bleiben aber pro Screen zusammen organisiert
   * kleine modale Dialoge werden innerhalb des aktuellen Screens als Overlay modelliert
+  * der Preview-Modus instanziiert **dieselben Screen-Module** wie der Normalbetrieb; zusaetzliche Preview-Screens oder Stub-Screens sind nicht vorgesehen
 * `components/`
   * wiederverwendbare UI-Bausteine
   * eher generische Praesentations- und Interaktionsbausteine mit moeglichst wenig eigener Logik
@@ -451,8 +455,9 @@ Die konkrete CLI-Syntax kann spaeter noch verfeinert werden; fachlich ist aber g
 * die UI muss ohne echten Agent mit **Preview-Daten** startbar sein
 * der Preview-Modus zeigt einen einzelnen Screen gezielt an
 * Preview-Screens laufen ohne echte Zeitablauflogik, aber mit aktiven Animationen
-* Preview-Daten werden in der ersten Version **fest im Code** ueber eine **Screen-/Scenario-Registry** definiert
+* Preview-Daten werden in der ersten Version **fest im Code** ueber eine **Scenario-Registry fuer echte Screens** definiert
 * alle produktiven **Hauptscreens** muessen direkt im Preview-Modus startbar sein
+* der Preview-Modus darf **keinen zweiten UI-Codepfad** fuer dieselben Screens aufbauen
 
 ## Architektur fuer Preview-Daten
 
@@ -470,6 +475,13 @@ Dadurch kann derselbe Screen entweder:
 * oder mit einem fest vorgegebenen Review-Zustand ohne Agent und ohne laufende Timer
 
 gestartet werden, ohne dass pro Screen ein zweiter Sonderpfad gebaut werden muss.
+
+Konkret bedeutet das:
+
+* `rook-ui --preview <screen-id>` startet die normale SDL-basierte App-Shell
+* die Screen-ID wird gegen dieselbe Screen-Registry wie im Produktivbetrieb aufgeloest
+* der Unterschied liegt nur in den injizierten Preview-Daten bzw. im Startzustand
+* Renderpfad, Fokuslogik, Screen-Komposition und Screen-Code bleiben identisch
 
 ## Layout-Strategie
 

@@ -1,0 +1,4 @@
+Mit RooK Service kann eine Support-Sitzung direkt an dieser Konsole gestartet werden.
+Nach dem Verbindungsaufbau zeigt die Anwendung eine Service-PIN an.
+Vor dem Start der Sitzung kann bei Bedarf zuerst ein WLAN ausgewaehlt werden.
+Anschliessend wird eine sichere Verbindung aufgebaut.

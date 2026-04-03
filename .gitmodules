@@ -1,3 +1,6 @@
 [submodule "spec"]
 	path = spec
 	url = git@github.com:Rook-Computer/rook-servicechannel-spec.git
+[submodule "third_party/rmlui"]
+	path = third_party/rmlui
+	url = https://github.com/mikke89/RmlUi.git
