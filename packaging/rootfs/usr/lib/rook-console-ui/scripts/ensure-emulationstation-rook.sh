@@ -3,10 +3,7 @@ set -eu
 
 SYSTEMS_CFG="${ROOK_UI_ES_SYSTEMS_CFG:-/etc/emulationstation/es_systems.cfg}"
 ROMS_PATH="${ROOK_UI_ES_ROMS_PATH:-/usr/share/rook-console-ui/emulationstation/roms}"
-THEME_DIR="${ROOK_UI_ES_THEME_DIR:-/etc/emulationstation/themes/carbon-2021/rook}"
-THEME_LOGO="${ROOK_UI_ES_THEME_LOGO:-/usr/share/rook-console-ui/emulationstation/logo/rook-system-logo.svg}"
 TMP_FILE="$(mktemp)"
-THEME_FILE="${THEME_DIR}/theme.xml"
 
 cleanup() {
   rm -f "$TMP_FILE"
@@ -14,31 +11,22 @@ cleanup() {
 
 trap cleanup EXIT
 
-ensure_theme_logo() {
-  if [ -f "${THEME_FILE}" ] &&
-     ! grep -q 'Managed by rook-console-integration' "${THEME_FILE}" &&
-     ! grep -q 'rook_logo_v1-0-0_name_bw.svg' "${THEME_FILE}" &&
-     ! grep -q '/usr/share/rook-console-ui/emulationstation/logo/rook-system-logo.svg' "${THEME_FILE}"; then
-    return
-  fi
+cleanup_legacy_theme_snippets() {
+  for theme_file in \
+    /etc/emulationstation/themes/carbon-2021/rook/theme.xml \
+    /etc/emulationstation/themes/carbon/rook/theme.xml
+  do
+    if [ ! -f "${theme_file}" ]; then
+      continue
+    fi
 
-  mkdir -p "${THEME_DIR}"
-  cat > "${THEME_FILE}" <<EOF
-<!-- Managed by rook-console-integration -->
-<theme>
-  <formatVersion>3</formatVersion>
-  <include>../theme.xml</include>
-  <view name="system">
-    <image name="logo">
-      <path>${THEME_LOGO}</path>
-      <origin>0.5 0.5</origin>
-      <pos>0.5 0.12</pos>
-      <maxSize>0.7 0.18</maxSize>
-    </image>
-  </view>
-</theme>
-EOF
-  chmod 0644 "${THEME_FILE}"
+    if grep -q 'Managed by rook-console-integration' "${theme_file}" || \
+       grep -q 'rook_logo_v1-0-0_name_bw.svg' "${theme_file}" || \
+       grep -q '/usr/share/rook-console-ui/emulationstation/logo/rook-system-logo.svg' "${theme_file}"; then
+      rm -f "${theme_file}"
+      rmdir --ignore-fail-on-non-empty "$(dirname "${theme_file}")" 2>/dev/null || true
+    fi
+  done
 }
 
 ensure_systems_cfg_mode() {
@@ -61,7 +49,7 @@ EOF
 )
 
 if [ ! -f "$SYSTEMS_CFG" ]; then
-  ensure_theme_logo
+  cleanup_legacy_theme_snippets
   mkdir -p "$(dirname "$SYSTEMS_CFG")"
   cat > "$SYSTEMS_CFG" <<EOF
 <?xml version="1.0"?>
@@ -75,12 +63,12 @@ fi
 
 if grep -qi '<name>[[:space:]]*rook[[:space:]]*</name>' "$SYSTEMS_CFG" || \
    grep -qi '<fullname>[[:space:]]*RooK[[:space:]]*</fullname>' "$SYSTEMS_CFG"; then
-  ensure_theme_logo
+  cleanup_legacy_theme_snippets
   ensure_systems_cfg_mode
   exit 0
 fi
 
-ensure_theme_logo
+cleanup_legacy_theme_snippets
 
 awk -v system_block="$SYSTEM_BLOCK" '
   BEGIN { inserted = 0 }

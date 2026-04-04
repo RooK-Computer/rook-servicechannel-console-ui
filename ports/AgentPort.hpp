@@ -23,7 +23,7 @@ struct VpnStateChangedEvent {
 };
 
 struct SupportStateChangedEvent {
-  app::SupportState state = app::SupportState::Idle;
+  app::RuntimeState runtime;
 };
 
 struct PinAssignedEvent {

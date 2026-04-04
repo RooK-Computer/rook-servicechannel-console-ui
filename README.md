@@ -75,7 +75,7 @@ make clean
 * The packaged launcher also exports `LD_LIBRARY_PATH=/usr/lib/rook-console-ui` so the bundled `librmlui.so` is found at runtime.
 * In packaged operation the UI resolves the agent socket from `/etc/default/rook-agent` via `ROOK_AGENT_SOCKET_PATH`; without that file it falls back to the per-user config path for `rook-agent/agent.sock`.
 * `make package` builds two Debian packages with `nfpm`: `rook-console-ui` and `rook-console-integration`.
-* The integration package installs a conservative EmulationStation theme snippet for `carbon-2021`, reusing `resources/rook_logo_v1-0-0_name_bw.svg`.
+* The integration package installs the RooK system logo directly as `carbon-2021/art/systems/rook.svg` and removes earlier managed theme snippets on upgrade.
 * If `nfpm` is not installed locally, the packaging targets fall back to `go run github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.1`.
 
 ## Contribution workflow

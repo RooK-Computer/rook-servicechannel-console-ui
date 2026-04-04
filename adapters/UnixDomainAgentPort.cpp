@@ -348,6 +348,32 @@ std::vector<std::string> parse_wifi_networks(const json& payload) {
   return result;
 }
 
+app::RuntimeState parse_status_payload(const json& payload) {
+  app::RuntimeState state{
+      .support_active = payload.value("supportActive", false),
+      .support_state = parse_support_state(payload.value("supportState", "idle")),
+      .wifi_state = parse_connection_state(payload.value("wifiState", "disconnected")),
+      .vpn_state = parse_connection_state(payload.value("vpnState", "disconnected")),
+      .any_wifi_active = payload.value("anyWifiActive", false),
+      .support_wifi_active = payload.value("supportWifiActive", false),
+  };
+
+  if (payload.contains("activeWifiConnection") && payload["activeWifiConnection"].is_string()) {
+    state.active_wifi_connection = payload["activeWifiConnection"].get<std::string>();
+  }
+  if (payload.contains("networks") && payload["networks"].is_array()) {
+    state.wifi_networks = parse_wifi_networks(payload);
+  }
+  if (payload.contains("session") && payload["session"].is_object()) {
+    const json& session = payload["session"];
+    if (session.contains("pin") && session["pin"].is_string()) {
+      state.pin = session["pin"].get<std::string>();
+    }
+  }
+
+  return state;
+}
+
 void throw_if_error_response(const json& response) {
   if (response.contains("success") && response["success"].is_boolean() && !response["success"].get<bool>()) {
     const json error = response.contains("error") ? response["error"] : json::object();
@@ -399,7 +425,7 @@ ports::AgentEvent parse_event(const json& message) {
   }
   if (type == "SupportStateChanged") {
     return ports::SupportStateChangedEvent{
-        .state = parse_support_state(payload.value("state", payload.value("supportState", "idle"))),
+        .runtime = parse_status_payload(payload),
     };
   }
   if (type == "PinAssigned") {
@@ -518,20 +544,7 @@ json UnixDomainAgentPort::send_request(std::string_view action, const std::optio
 app::RuntimeState UnixDomainAgentPort::get_status() {
   const json response = send_request("GetStatus");
   const json payload = response.contains("payload") ? response["payload"] : json::object();
-  app::RuntimeState state{
-      .support_active = payload.value("supportActive", false),
-      .support_state = parse_support_state(payload.value("supportState", "idle")),
-      .wifi_state = parse_connection_state(payload.value("wifiState", "disconnected")),
-      .vpn_state = parse_connection_state(payload.value("vpnState", "disconnected")),
-      .any_wifi_active = payload.value("anyWifiActive", false),
-      .support_wifi_active = payload.value("supportWifiActive", false),
-  };
-
-  if (payload.contains("activeWifiConnection") && payload["activeWifiConnection"].is_string()) {
-    state.active_wifi_connection = payload["activeWifiConnection"].get<std::string>();
-  }
-
-  return state;
+  return parse_status_payload(payload);
 }
 
 std::vector<std::string> UnixDomainAgentPort::scan_wifi() {

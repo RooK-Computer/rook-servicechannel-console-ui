@@ -70,8 +70,19 @@ void apply_event(RuntimeState& runtime, const ports::AgentEvent& event) {
   }
 
   if (const auto* support_state = std::get_if<ports::SupportStateChangedEvent>(&event); support_state != nullptr) {
-    runtime.support_state = support_state->state;
-    runtime.support_active = support_state->state != SupportState::Idle;
+    runtime.support_active = support_state->runtime.support_active;
+    runtime.support_state = support_state->runtime.support_state;
+    runtime.wifi_state = support_state->runtime.wifi_state;
+    runtime.vpn_state = support_state->runtime.vpn_state;
+    runtime.any_wifi_active = support_state->runtime.any_wifi_active;
+    runtime.support_wifi_active = support_state->runtime.support_wifi_active;
+    runtime.active_wifi_connection = support_state->runtime.active_wifi_connection;
+    if (!support_state->runtime.wifi_networks.empty()) {
+      runtime.wifi_networks = support_state->runtime.wifi_networks;
+    }
+    if (support_state->runtime.pin.has_value()) {
+      runtime.pin = support_state->runtime.pin;
+    }
     return;
   }
 
@@ -95,13 +106,20 @@ void apply_event(RuntimeState& runtime, const ports::AgentEvent& event) {
 
 void refresh_runtime_status(ports::AgentPort& agent, RuntimeState& runtime) {
   RuntimeState latest = agent.get_status();
-  latest.wifi_networks = runtime.wifi_networks;
+  if (latest.wifi_networks.empty()) {
+    latest.wifi_networks = runtime.wifi_networks;
+  }
   latest.last_error = runtime.last_error;
-  latest.pin = runtime.pin;
 
   if (has_active_support_session(latest)) {
-    if (const auto pin = agent.get_pin(); pin.has_value()) {
-      latest.pin = *pin;
+    if (!latest.pin.has_value()) {
+      latest.pin = runtime.pin;
+    }
+    if (!latest.pin.has_value()) {
+      const auto pin = agent.get_pin();
+      if (pin.has_value()) {
+        latest.pin = *pin;
+      }
     }
   } else {
     latest.pin.reset();

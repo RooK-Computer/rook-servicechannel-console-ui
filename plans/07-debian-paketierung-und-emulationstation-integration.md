@@ -31,6 +31,6 @@ Die RooK UI als Debian-Paket mit `nfpm` auslieferbar machen und die Integration 
     * ein fehlendes `RooK`-System wird in der systemweiten EmulationStation-Konfiguration angelegt
     * vorhandene RooK-/Service-Eintraege werden nicht ueberschrieben
     * bestehende `es_systems.cfg`-Dateien werden bei Paket-Upgrades auf Modus `0644` korrigiert
-    * fuer das System `RooK` wird ein konservatives Theme-Snippet fuer `carbon-2021` mit dem paketierten SVG-Logo angelegt
+    * fuer das System `RooK` wird das paketierte SVG direkt im `carbon-2021`-Art-Pfad als Systemlogo installiert
 5. **Dokumentation nachgezogen**
    * lokales Konzept, Plan-Index, README und Implementierungsstatus spiegeln die neue Paketierungs- und Integrationslogik
