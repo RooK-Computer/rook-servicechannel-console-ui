@@ -1,6 +1,7 @@
 #include "app/Application.hpp"
 
 #include <chrono>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -20,6 +21,7 @@ namespace rook::ui::app {
 namespace {
 
 using Clock = std::chrono::steady_clock;
+using WifiScanFuture = std::future<std::vector<std::string>>;
 
 std::string bool_param(bool value) {
   return value ? "true" : "false";
@@ -38,6 +40,13 @@ std::string join_lines(const std::vector<std::string>& lines) {
 
 bool is_password_screen(std::string_view screen_id) {
   return screen_id == "keyboard" || screen_id == "password";
+}
+
+WifiScanFuture launch_wifi_scan_task(std::string socket_path) {
+  return std::async(std::launch::async, [socket_path = std::move(socket_path)] {
+    adapters::UnixDomainAgentPort agent(std::move(socket_path));
+    return agent.scan_wifi();
+  });
 }
 
 std::string utf8_pop_back(std::string value) {
@@ -151,7 +160,7 @@ StartRequest determine_normal_start_request(const UiSettings& settings, const Ru
   }
 
   return StartRequest{
-      .screen_id = "wifi-list",
+      .screen_id = "wifi-scan",
       .params = {},
   };
 }
@@ -161,7 +170,7 @@ IntentParams runtime_params_for_request(const StartRequest& request, const UiSet
 
   if (request.screen_id == "welcome") {
     params["hide-welcome"] = bool_param(settings.hide_welcome);
-    params["continue-target"] = has_active_support_session(runtime) ? "status" : (has_connected_wifi(runtime) ? "vpn-wait" : "wifi-list");
+    params["continue-target"] = has_active_support_session(runtime) ? "status" : (has_connected_wifi(runtime) ? "vpn-wait" : "wifi-scan");
   } else if (request.screen_id == "status") {
     if (runtime.pin.has_value()) {
       params["pin"] = *runtime.pin;
@@ -271,6 +280,7 @@ int Application::run_graphical() const {
   UiSettings settings;
   std::unique_ptr<ports::AgentPort> agent;
   RuntimeState runtime;
+  std::optional<WifiScanFuture> wifi_scan_future;
   StartRequest start_request = create_start_request();
 
   if (config_.runtime_mode == RuntimeMode::Normal) {
@@ -282,8 +292,6 @@ int Application::run_graphical() const {
 
     if (start_request.screen_id == "vpn-wait") {
       agent->start_support();
-    } else if (start_request.screen_id == "wifi-list") {
-      runtime.wifi_networks = agent->scan_wifi();
     }
   }
 
@@ -294,6 +302,11 @@ int Application::run_graphical() const {
   while (true) {
     StartRequest active_request = session.current();
     if (config_.runtime_mode == RuntimeMode::Normal && agent != nullptr) {
+      if (active_request.screen_id == "wifi-scan" && !wifi_scan_future.has_value()) {
+        runtime.last_error.reset();
+        runtime.wifi_networks.clear();
+        wifi_scan_future.emplace(launch_wifi_scan_task(config_.agent_socket_path));
+      }
       active_request.params = runtime_params_for_request(active_request, settings, runtime);
     }
 
@@ -312,7 +325,8 @@ int Application::run_graphical() const {
       }
 
       if (config_.runtime_mode == RuntimeMode::Normal && agent != nullptr &&
-          (command == InputCommand::Tick || active_request.screen_id == "wifi-list" || active_request.screen_id == "status")) {
+          (command == InputCommand::Tick || active_request.screen_id == "wifi-list" || active_request.screen_id == "status" ||
+           active_request.screen_id == "wifi-scan")) {
         for (auto event = agent->poll_event(std::chrono::milliseconds(0)); event.has_value();
              event = agent->poll_event(std::chrono::milliseconds(0))) {
           apply_event(runtime, *event);
@@ -361,6 +375,21 @@ int Application::run_graphical() const {
             screen_entered_at = now;
             break;
           }
+        }
+
+        if (active_request.screen_id == "wifi-scan" && wifi_scan_future.has_value() &&
+            wifi_scan_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+          try {
+            runtime.wifi_networks = wifi_scan_future->get();
+            runtime.last_error.reset();
+            wifi_scan_future.reset();
+            session.apply(navigate_to("wifi-list"));
+          } catch (const std::exception& error) {
+            wifi_scan_future.reset();
+            session.apply(navigate_to("wifi-error", {{"message", error.what()}}));
+          }
+          screen_entered_at = now;
+          break;
         }
 
         if (command == InputCommand::Tick) {
@@ -438,12 +467,6 @@ int Application::run_graphical() const {
             runtime.last_error.reset();
           }
 
-          if (active_request.screen_id == "welcome" && intent->kind == IntentKind::NavigateTo &&
-              intent->target_screen_id == "wifi-list") {
-            runtime.last_error.reset();
-            runtime.wifi_networks = agent->scan_wifi();
-          }
-
           if (is_password_screen(active_request.screen_id) && intent->kind == IntentKind::NavigateTo && intent->target_screen_id == "wifi-wait") {
             const std::string ssid = intent->params.at("ssid");
             const std::string password = intent->params.at("password");
@@ -464,9 +487,9 @@ int Application::run_graphical() const {
 
           if ((active_request.screen_id == "wifi-error" || active_request.screen_id == "vpn-error") &&
               intent->kind == IntentKind::NavigateTo &&
-              intent->target_screen_id == "wifi-list") {
+              intent->target_screen_id == "wifi-scan") {
             runtime.last_error.reset();
-            runtime.wifi_networks = agent->scan_wifi();
+            runtime.wifi_networks.clear();
           }
         }
 
@@ -555,12 +578,11 @@ int Application::run_normal() const {
   UiSettings settings = settings_store.load();
   auto agent = std::make_unique<adapters::UnixDomainAgentPort>(config_.agent_socket_path);
   RuntimeState runtime;
+  std::optional<WifiScanFuture> wifi_scan_future;
   refresh_runtime_status(*agent, runtime);
   StartRequest start_request = determine_normal_start_request(settings, runtime);
   if (start_request.screen_id == "vpn-wait") {
     agent->start_support();
-  } else if (start_request.screen_id == "wifi-list") {
-    runtime.wifi_networks = agent->scan_wifi();
   }
 
   NavigationSession session(start_request);
@@ -573,6 +595,11 @@ int Application::run_normal() const {
 
   while (true) {
     StartRequest active_request = session.current();
+    if (active_request.screen_id == "wifi-scan" && !wifi_scan_future.has_value()) {
+      runtime.last_error.reset();
+      runtime.wifi_networks.clear();
+      wifi_scan_future.emplace(launch_wifi_scan_task(config_.agent_socket_path));
+    }
     active_request.params = runtime_params_for_request(active_request, settings, runtime);
 
     const auto model = resolve_model(active_request);
@@ -637,6 +664,21 @@ int Application::run_normal() const {
           screen_entered_at = now;
           break;
         }
+      }
+
+      if (active_request.screen_id == "wifi-scan" && wifi_scan_future.has_value() &&
+          wifi_scan_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+        try {
+          runtime.wifi_networks = wifi_scan_future->get();
+          runtime.last_error.reset();
+          wifi_scan_future.reset();
+          session.apply(navigate_to("wifi-list"));
+        } catch (const std::exception& error) {
+          wifi_scan_future.reset();
+          session.apply(navigate_to("wifi-error", {{"message", error.what()}}));
+        }
+        screen_entered_at = now;
+        break;
       }
 
       if (command == InputCommand::Tick) {
@@ -712,12 +754,6 @@ int Application::run_normal() const {
           runtime.last_error.reset();
         }
 
-        if (active_request.screen_id == "welcome" && intent->kind == IntentKind::NavigateTo &&
-            intent->target_screen_id == "wifi-list") {
-          runtime.last_error.reset();
-          runtime.wifi_networks = agent->scan_wifi();
-        }
-
         if (is_password_screen(active_request.screen_id) && intent->kind == IntentKind::NavigateTo && intent->target_screen_id == "wifi-wait") {
           const std::string ssid = intent->params.at("ssid");
           const std::string password = intent->params.at("password");
@@ -738,9 +774,9 @@ int Application::run_normal() const {
 
         if ((active_request.screen_id == "wifi-error" || active_request.screen_id == "vpn-error") &&
             intent->kind == IntentKind::NavigateTo &&
-            intent->target_screen_id == "wifi-list") {
+            intent->target_screen_id == "wifi-scan") {
           runtime.last_error.reset();
-          runtime.wifi_networks = agent->scan_wifi();
+          runtime.wifi_networks.clear();
         }
 
         if (!session.apply(*intent)) {

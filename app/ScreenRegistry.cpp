@@ -10,6 +10,7 @@
 #include "screens/WelcomeScreen.hpp"
 #include "screens/WifiErrorScreen.hpp"
 #include "screens/WifiListScreen.hpp"
+#include "screens/WifiScanScreen.hpp"
 #include "screens/WifiWaitScreen.hpp"
 
 namespace rook::ui::app {
@@ -47,6 +48,7 @@ ScreenRegistry create_default_screen_registry(const AppPaths& paths) {
   ScreenRegistry registry;
   registry.register_screen("welcome", [paths] { return std::make_unique<screens::WelcomeScreen>(paths); });
   registry.register_screen("status", [] { return std::make_unique<screens::StatusScreen>(); });
+  registry.register_screen("wifi-scan", [] { return std::make_unique<screens::WifiScanScreen>(); });
   registry.register_screen("wifi-list", [] { return std::make_unique<screens::WifiListScreen>(); });
   registry.register_screen("keyboard", [] { return std::make_unique<screens::KeyboardScreen>(); });
   registry.register_screen("password", [] { return std::make_unique<screens::KeyboardScreen>(); });

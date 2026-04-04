@@ -17,11 +17,11 @@ render::ScreenModel VpnErrorScreen::model(const ScreenContext& context) const {
        .actions = components::ActionRow{
            .id = "vpn-error-actions",
            .items = {
-              components::ActionItem{
-                  .id = "vpn-error-retry",
-                  .label = "WLAN wechseln",
-                  .intent = app::navigate_to("wifi-list"),
-              },
+               components::ActionItem{
+                   .id = "vpn-error-retry",
+                    .label = "WLAN wechseln",
+                   .intent = app::navigate_to("wifi-scan"),
+               },
               components::ActionItem{
                   .id = "vpn-error-exit",
                   .label = "Abbrechen und Beenden",

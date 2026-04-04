@@ -25,6 +25,7 @@ using Clock = std::chrono::steady_clock;
 constexpr std::string_view kPackagedAgentDefaultsFile = "/etc/default/rook-agent";
 constexpr std::string_view kPackagedAgentSocket = "/run/rook-agent/agent.sock";
 constexpr auto kRequestTimeout = std::chrono::seconds(2);
+constexpr auto kWifiScanRequestTimeout = std::chrono::seconds(15);
 
 std::string env_or_default(const char* name, std::string_view fallback) {
   if (const char* value = std::getenv(name); value != nullptr && *value != '\0') {
@@ -494,7 +495,7 @@ std::optional<json> UnixDomainAgentPort::read_message(std::chrono::milliseconds 
   }
 }
 
-json UnixDomainAgentPort::send_request(std::string_view action, const std::optional<json>& payload) {
+json UnixDomainAgentPort::send_request(std::string_view action, const std::optional<json>& payload, std::chrono::milliseconds timeout) {
   std::runtime_error last_error("agent request failed");
 
   for (int attempt = 0; attempt < 2; ++attempt) {
@@ -503,7 +504,7 @@ json UnixDomainAgentPort::send_request(std::string_view action, const std::optio
       ensure_connected();
       send_all(fd_, build_request(request_id, action, payload).dump() + "\n");
 
-      const auto deadline = Clock::now() + kRequestTimeout;
+      const auto deadline = Clock::now() + timeout;
       while (true) {
         const auto now = Clock::now();
         if (now >= deadline) {
@@ -552,7 +553,7 @@ app::RuntimeState UnixDomainAgentPort::get_status() {
 }
 
 std::vector<std::string> UnixDomainAgentPort::scan_wifi() {
-  const json response = send_request("ScanWifi");
+  const json response = send_request("ScanWifi", std::nullopt, kWifiScanRequestTimeout);
   const json payload = response.contains("payload") ? response["payload"] : json::object();
   std::vector<std::string> networks = parse_wifi_networks(payload);
   if (!networks.empty()) {

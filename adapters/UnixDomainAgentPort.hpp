@@ -31,7 +31,8 @@ class UnixDomainAgentPort final : public ports::AgentPort {
   [[nodiscard]] std::string next_request_id();
   nlohmann::json send_request(
       std::string_view action,
-      const std::optional<nlohmann::json>& payload = std::nullopt);
+      const std::optional<nlohmann::json>& payload = std::nullopt,
+      std::chrono::milliseconds timeout = std::chrono::seconds(2));
   [[nodiscard]] std::optional<nlohmann::json> read_message(std::chrono::milliseconds timeout);
 
   std::string socket_path_;

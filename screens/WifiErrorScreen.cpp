@@ -17,11 +17,11 @@ render::ScreenModel WifiErrorScreen::model(const ScreenContext& context) const {
        .actions = components::ActionRow{
            .id = "wifi-error-actions",
            .items = {
-              components::ActionItem{
-                  .id = "wifi-error-back",
-                  .label = "Zurueck zur WLAN-Liste",
-                  .intent = app::navigate_to("wifi-list"),
-              },
+               components::ActionItem{
+                   .id = "wifi-error-back",
+                   .label = "WLAN erneut suchen",
+                   .intent = app::navigate_to("wifi-scan"),
+               },
               components::ActionItem{
                   .id = "wifi-error-exit",
                   .label = "Abbrechen und Beenden",

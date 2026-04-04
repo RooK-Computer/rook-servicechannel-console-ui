@@ -59,6 +59,7 @@ add_executable(rook-ui
   screens/WelcomeScreen.cpp
   screens/WifiErrorScreen.cpp
   screens/WifiListScreen.cpp
+  screens/WifiScanScreen.cpp
   screens/WifiWaitScreen.cpp
   theme/Theme.cpp
 )
