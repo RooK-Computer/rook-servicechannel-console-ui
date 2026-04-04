@@ -20,6 +20,7 @@ class UnixDomainAgentPort final : public ports::AgentPort {
   [[nodiscard]] std::vector<std::string> scan_wifi() override;
   void connect_wifi(std::string_view ssid, std::string_view password) override;
   void disconnect_wifi() override;
+  void start_vpn() override;
   void start_support() override;
   void stop_support() override;
   [[nodiscard]] std::optional<std::string> get_pin() override;

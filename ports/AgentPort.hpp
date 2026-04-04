@@ -54,6 +54,7 @@ class AgentPort {
   [[nodiscard]] virtual std::vector<std::string> scan_wifi() = 0;
   virtual void connect_wifi(std::string_view ssid, std::string_view password) = 0;
   virtual void disconnect_wifi() = 0;
+  virtual void start_vpn() = 0;
   virtual void start_support() = 0;
   virtual void stop_support() = 0;
   [[nodiscard]] virtual std::optional<std::string> get_pin() = 0;

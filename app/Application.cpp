@@ -72,6 +72,13 @@ ActionFuture launch_start_support_task(std::string socket_path) {
   });
 }
 
+ActionFuture launch_start_vpn_task(std::string socket_path) {
+  return std::async(std::launch::async, [socket_path = std::move(socket_path)] {
+    adapters::UnixDomainAgentPort agent(std::move(socket_path));
+    agent.start_vpn();
+  });
+}
+
 std::string utf8_pop_back(std::string value) {
   while (!value.empty()) {
     const unsigned char byte = static_cast<unsigned char>(value.back());
@@ -305,6 +312,7 @@ int Application::run_graphical() const {
   RuntimeState runtime;
   std::optional<WifiScanFuture> wifi_scan_future;
   std::optional<ActionFuture> wifi_connect_future;
+  std::optional<ActionFuture> vpn_start_future;
   std::optional<ActionFuture> start_support_future;
   StartRequest start_request = create_start_request();
 
@@ -337,7 +345,11 @@ int Application::run_graphical() const {
       }
       if (active_request.screen_id == "vpn-wait" && !start_support_future.has_value()) {
         runtime.last_error.reset();
-        start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
+        if (runtime.vpn_state != ConnectionState::Connected && !vpn_start_future.has_value()) {
+          vpn_start_future.emplace(launch_start_vpn_task(config_.agent_socket_path));
+        } else if (runtime.vpn_state == ConnectionState::Connected && !has_active_support_session(runtime)) {
+          start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
+        }
       }
       active_request.params = runtime_params_for_request(active_request, settings, runtime);
     }
@@ -389,6 +401,7 @@ int Application::run_graphical() const {
         }
 
           if (!wifi_connect_future.has_value() && has_requested_wifi_connection(runtime, active_request.params.at("ssid"))) {
+            vpn_start_future.reset();
             start_support_future.reset();
             session.apply(navigate_to("vpn-wait"));
             screen_entered_at = now;
@@ -407,6 +420,26 @@ int Application::run_graphical() const {
         }
 
         if (active_request.screen_id == "vpn-wait") {
+          if (vpn_start_future.has_value() &&
+              vpn_start_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+            try {
+              vpn_start_future->get();
+              vpn_start_future.reset();
+              refresh_runtime_status(*agent, runtime);
+              runtime.last_error.reset();
+            } catch (const std::exception& error) {
+              vpn_start_future.reset();
+              session.apply(navigate_to("vpn-error", {{"message", error.what()}}));
+              screen_entered_at = now;
+              break;
+            }
+          }
+
+          if (!vpn_start_future.has_value() && runtime.vpn_state == ConnectionState::Connected && !start_support_future.has_value() &&
+              !has_active_support_session(runtime)) {
+            start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
+          }
+
           if (start_support_future.has_value() &&
               start_support_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
           try {
@@ -635,6 +668,7 @@ int Application::run_normal() const {
   RuntimeState runtime;
   std::optional<WifiScanFuture> wifi_scan_future;
   std::optional<ActionFuture> wifi_connect_future;
+  std::optional<ActionFuture> vpn_start_future;
   std::optional<ActionFuture> start_support_future;
   refresh_runtime_status(*agent, runtime);
   StartRequest start_request = determine_normal_start_request(settings, runtime);
@@ -662,7 +696,11 @@ int Application::run_normal() const {
     }
     if (active_request.screen_id == "vpn-wait" && !start_support_future.has_value()) {
       runtime.last_error.reset();
-      start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
+      if (runtime.vpn_state != ConnectionState::Connected && !vpn_start_future.has_value()) {
+        vpn_start_future.emplace(launch_start_vpn_task(config_.agent_socket_path));
+      } else if (runtime.vpn_state == ConnectionState::Connected && !has_active_support_session(runtime)) {
+        start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
+      }
     }
     active_request.params = runtime_params_for_request(active_request, settings, runtime);
 
@@ -710,6 +748,7 @@ int Application::run_normal() const {
         }
 
         if (!wifi_connect_future.has_value() && has_requested_wifi_connection(runtime, active_request.params.at("ssid"))) {
+          vpn_start_future.reset();
           start_support_future.reset();
           session.apply(navigate_to("vpn-wait"));
           screen_entered_at = now;
@@ -728,6 +767,26 @@ int Application::run_normal() const {
       }
 
       if (active_request.screen_id == "vpn-wait") {
+        if (vpn_start_future.has_value() &&
+            vpn_start_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+          try {
+            vpn_start_future->get();
+            vpn_start_future.reset();
+            refresh_runtime_status(*agent, runtime);
+            runtime.last_error.reset();
+          } catch (const std::exception& error) {
+            vpn_start_future.reset();
+            session.apply(navigate_to("vpn-error", {{"message", error.what()}}));
+            screen_entered_at = now;
+            break;
+          }
+        }
+
+        if (!vpn_start_future.has_value() && runtime.vpn_state == ConnectionState::Connected && !start_support_future.has_value() &&
+            !has_active_support_session(runtime)) {
+          start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
+        }
+
         if (start_support_future.has_value() &&
             start_support_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
           try {
