@@ -22,6 +22,7 @@ namespace {
 
 using Clock = std::chrono::steady_clock;
 using WifiScanFuture = std::future<std::vector<std::string>>;
+using ActionFuture = std::future<void>;
 
 std::string bool_param(bool value) {
   return value ? "true" : "false";
@@ -46,6 +47,20 @@ WifiScanFuture launch_wifi_scan_task(std::string socket_path) {
   return std::async(std::launch::async, [socket_path = std::move(socket_path)] {
     adapters::UnixDomainAgentPort agent(std::move(socket_path));
     return agent.scan_wifi();
+  });
+}
+
+ActionFuture launch_connect_wifi_task(std::string socket_path, std::string ssid, std::string password) {
+  return std::async(std::launch::async, [socket_path = std::move(socket_path), ssid = std::move(ssid), password = std::move(password)] {
+    adapters::UnixDomainAgentPort agent(std::move(socket_path));
+    agent.connect_wifi(ssid, password);
+  });
+}
+
+ActionFuture launch_start_support_task(std::string socket_path) {
+  return std::async(std::launch::async, [socket_path = std::move(socket_path)] {
+    adapters::UnixDomainAgentPort agent(std::move(socket_path));
+    agent.start_support();
   });
 }
 
@@ -281,6 +296,8 @@ int Application::run_graphical() const {
   std::unique_ptr<ports::AgentPort> agent;
   RuntimeState runtime;
   std::optional<WifiScanFuture> wifi_scan_future;
+  std::optional<ActionFuture> wifi_connect_future;
+  std::optional<ActionFuture> start_support_future;
   StartRequest start_request = create_start_request();
 
   if (config_.runtime_mode == RuntimeMode::Normal) {
@@ -290,9 +307,6 @@ int Application::run_graphical() const {
     refresh_runtime_status(*agent, runtime);
     start_request = determine_normal_start_request(settings, runtime);
 
-    if (start_request.screen_id == "vpn-wait") {
-      agent->start_support();
-    }
   }
 
   NavigationSession session(start_request);
@@ -306,6 +320,16 @@ int Application::run_graphical() const {
         runtime.last_error.reset();
         runtime.wifi_networks.clear();
         wifi_scan_future.emplace(launch_wifi_scan_task(config_.agent_socket_path));
+      }
+      if (active_request.screen_id == "wifi-wait" && !wifi_connect_future.has_value()) {
+        runtime.last_error.reset();
+        runtime.active_wifi_connection = active_request.params.at("ssid");
+        wifi_connect_future.emplace(
+            launch_connect_wifi_task(config_.agent_socket_path, active_request.params.at("ssid"), active_request.params.at("password")));
+      }
+      if (active_request.screen_id == "vpn-wait" && !start_support_future.has_value()) {
+        runtime.last_error.reset();
+        start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
       }
       active_request.params = runtime_params_for_request(active_request, settings, runtime);
     }
@@ -341,8 +365,22 @@ int Application::run_graphical() const {
         }
 
         if (active_request.screen_id == "wifi-wait") {
+          if (wifi_connect_future.has_value() &&
+              wifi_connect_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+            try {
+              wifi_connect_future->get();
+              wifi_connect_future.reset();
+              runtime.last_error.reset();
+            } catch (const std::exception& error) {
+              wifi_connect_future.reset();
+              session.apply(navigate_to("wifi-error", {{"message", error.what()}}));
+              screen_entered_at = now;
+              break;
+            }
+          }
+
           if (has_connected_wifi(runtime)) {
-            agent->start_support();
+            start_support_future.reset();
             session.apply(navigate_to("vpn-wait"));
             screen_entered_at = now;
             break;
@@ -360,6 +398,20 @@ int Application::run_graphical() const {
         }
 
         if (active_request.screen_id == "vpn-wait") {
+          if (start_support_future.has_value() &&
+              start_support_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+            try {
+              start_support_future->get();
+              start_support_future.reset();
+              runtime.last_error.reset();
+            } catch (const std::exception& error) {
+              start_support_future.reset();
+              session.apply(navigate_to("vpn-error", {{"message", error.what()}}));
+              screen_entered_at = now;
+              break;
+            }
+          }
+
           if (has_active_support_session(runtime) && runtime.pin.has_value()) {
             session.apply(navigate_to("status", {{"pin", *runtime.pin}}));
             screen_entered_at = now;
@@ -462,15 +514,8 @@ int Application::run_graphical() const {
             UiSettingsStore(config_.paths.settings_file).save(settings);
           }
 
-          if (active_request.screen_id == "welcome" && intent->kind == IntentKind::NavigateTo && intent->target_screen_id == "vpn-wait") {
-            agent->start_support();
-            runtime.last_error.reset();
-          }
-
           if (is_password_screen(active_request.screen_id) && intent->kind == IntentKind::NavigateTo && intent->target_screen_id == "wifi-wait") {
             const std::string ssid = intent->params.at("ssid");
-            const std::string password = intent->params.at("password");
-            agent->connect_wifi(ssid, password);
             runtime.active_wifi_connection = ssid;
             runtime.last_error.reset();
           }
@@ -579,11 +624,10 @@ int Application::run_normal() const {
   auto agent = std::make_unique<adapters::UnixDomainAgentPort>(config_.agent_socket_path);
   RuntimeState runtime;
   std::optional<WifiScanFuture> wifi_scan_future;
+  std::optional<ActionFuture> wifi_connect_future;
+  std::optional<ActionFuture> start_support_future;
   refresh_runtime_status(*agent, runtime);
   StartRequest start_request = determine_normal_start_request(settings, runtime);
-  if (start_request.screen_id == "vpn-wait") {
-    agent->start_support();
-  }
 
   NavigationSession session(start_request);
   auto screen_entered_at = Clock::now();
@@ -599,6 +643,16 @@ int Application::run_normal() const {
       runtime.last_error.reset();
       runtime.wifi_networks.clear();
       wifi_scan_future.emplace(launch_wifi_scan_task(config_.agent_socket_path));
+    }
+    if (active_request.screen_id == "wifi-wait" && !wifi_connect_future.has_value()) {
+      runtime.last_error.reset();
+      runtime.active_wifi_connection = active_request.params.at("ssid");
+      wifi_connect_future.emplace(
+          launch_connect_wifi_task(config_.agent_socket_path, active_request.params.at("ssid"), active_request.params.at("password")));
+    }
+    if (active_request.screen_id == "vpn-wait" && !start_support_future.has_value()) {
+      runtime.last_error.reset();
+      start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
     }
     active_request.params = runtime_params_for_request(active_request, settings, runtime);
 
@@ -630,8 +684,22 @@ int Application::run_normal() const {
       }
 
       if (active_request.screen_id == "wifi-wait") {
+        if (wifi_connect_future.has_value() &&
+            wifi_connect_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+          try {
+            wifi_connect_future->get();
+            wifi_connect_future.reset();
+            runtime.last_error.reset();
+          } catch (const std::exception& error) {
+            wifi_connect_future.reset();
+            session.apply(navigate_to("wifi-error", {{"message", error.what()}}));
+            screen_entered_at = now;
+            break;
+          }
+        }
+
         if (has_connected_wifi(runtime)) {
-          agent->start_support();
+          start_support_future.reset();
           session.apply(navigate_to("vpn-wait"));
           screen_entered_at = now;
           break;
@@ -649,6 +717,20 @@ int Application::run_normal() const {
       }
 
       if (active_request.screen_id == "vpn-wait") {
+        if (start_support_future.has_value() &&
+            start_support_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+          try {
+            start_support_future->get();
+            start_support_future.reset();
+            runtime.last_error.reset();
+          } catch (const std::exception& error) {
+            start_support_future.reset();
+            session.apply(navigate_to("vpn-error", {{"message", error.what()}}));
+            screen_entered_at = now;
+            break;
+          }
+        }
+
         if (has_active_support_session(runtime) && runtime.pin.has_value()) {
           session.apply(navigate_to("status", {{"pin", *runtime.pin}}));
           screen_entered_at = now;
@@ -749,15 +831,8 @@ int Application::run_normal() const {
           settings_store.save(settings);
         }
 
-        if (active_request.screen_id == "welcome" && intent->kind == IntentKind::NavigateTo && intent->target_screen_id == "vpn-wait") {
-          agent->start_support();
-          runtime.last_error.reset();
-        }
-
         if (is_password_screen(active_request.screen_id) && intent->kind == IntentKind::NavigateTo && intent->target_screen_id == "wifi-wait") {
           const std::string ssid = intent->params.at("ssid");
-          const std::string password = intent->params.at("password");
-          agent->connect_wifi(ssid, password);
           runtime.active_wifi_connection = ssid;
           runtime.last_error.reset();
         }

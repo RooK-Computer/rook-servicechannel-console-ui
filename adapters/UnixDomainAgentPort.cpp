@@ -26,6 +26,8 @@ constexpr std::string_view kPackagedAgentDefaultsFile = "/etc/default/rook-agent
 constexpr std::string_view kPackagedAgentSocket = "/run/rook-agent/agent.sock";
 constexpr auto kRequestTimeout = std::chrono::seconds(2);
 constexpr auto kWifiScanRequestTimeout = std::chrono::seconds(15);
+constexpr auto kConnectWifiRequestTimeout = std::chrono::seconds(15);
+constexpr auto kStartSupportRequestTimeout = std::chrono::seconds(15);
 
 std::string env_or_default(const char* name, std::string_view fallback) {
   if (const char* value = std::getenv(name); value != nullptr && *value != '\0') {
@@ -574,7 +576,8 @@ void UnixDomainAgentPort::connect_wifi(std::string_view ssid, std::string_view p
       json{
           {"ssid", ssid},
           {"password", password},
-      });
+      },
+      kConnectWifiRequestTimeout);
 }
 
 void UnixDomainAgentPort::disconnect_wifi() {
@@ -582,7 +585,7 @@ void UnixDomainAgentPort::disconnect_wifi() {
 }
 
 void UnixDomainAgentPort::start_support() {
-  send_request("StartSupport");
+  send_request("StartSupport", std::nullopt, kStartSupportRequestTimeout);
 }
 
 void UnixDomainAgentPort::stop_support() {
