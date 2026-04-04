@@ -438,6 +438,12 @@ int Application::run_graphical() const {
             runtime.last_error.reset();
           }
 
+          if (active_request.screen_id == "welcome" && intent->kind == IntentKind::NavigateTo &&
+              intent->target_screen_id == "wifi-list") {
+            runtime.last_error.reset();
+            runtime.wifi_networks = agent->scan_wifi();
+          }
+
           if (is_password_screen(active_request.screen_id) && intent->kind == IntentKind::NavigateTo && intent->target_screen_id == "wifi-wait") {
             const std::string ssid = intent->params.at("ssid");
             const std::string password = intent->params.at("password");
@@ -704,6 +710,12 @@ int Application::run_normal() const {
         if (active_request.screen_id == "welcome" && intent->kind == IntentKind::NavigateTo && intent->target_screen_id == "vpn-wait") {
           agent->start_support();
           runtime.last_error.reset();
+        }
+
+        if (active_request.screen_id == "welcome" && intent->kind == IntentKind::NavigateTo &&
+            intent->target_screen_id == "wifi-list") {
+          runtime.last_error.reset();
+          runtime.wifi_networks = agent->scan_wifi();
         }
 
         if (is_password_screen(active_request.screen_id) && intent->kind == IntentKind::NavigateTo && intent->target_screen_id == "wifi-wait") {
