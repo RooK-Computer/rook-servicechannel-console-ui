@@ -436,7 +436,13 @@ int Application::run_graphical() const {
               vpn_start_future->get();
               vpn_start_future.reset();
               refresh_runtime_status(*agent, runtime);
+              if (runtime.vpn_state != ConnectionState::Connected) {
+                runtime.vpn_state = ConnectionState::Connected;
+              }
               runtime.last_error.reset();
+              if (!start_support_future.has_value() && !has_active_support_session(runtime)) {
+                start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
+              }
             } catch (const std::exception& error) {
               vpn_start_future.reset();
               session.apply(navigate_to("vpn-error", {{"message", error.what()}}));
@@ -793,7 +799,13 @@ int Application::run_normal() const {
             vpn_start_future->get();
             vpn_start_future.reset();
             refresh_runtime_status(*agent, runtime);
+            if (runtime.vpn_state != ConnectionState::Connected) {
+              runtime.vpn_state = ConnectionState::Connected;
+            }
             runtime.last_error.reset();
+            if (!start_support_future.has_value() && !has_active_support_session(runtime)) {
+              start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
+            }
           } catch (const std::exception& error) {
             vpn_start_future.reset();
             session.apply(navigate_to("vpn-error", {{"message", error.what()}}));
