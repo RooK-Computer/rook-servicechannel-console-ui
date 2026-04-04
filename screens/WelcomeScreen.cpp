@@ -26,11 +26,11 @@ render::ScreenModel WelcomeScreen::model(const ScreenContext& context) const {
 
   const bool hide_welcome = context.flag("hide-welcome");
 
-  return render::ScreenModel{
-      .screen_id = "welcome",
-      .title = "RooK Service",
-      .list = components::ListSection{
-          .id = "welcome-body",
+    return render::ScreenModel{
+        .screen_id = "welcome",
+        .title = "RooK Service",
+        .list = components::ListSection{
+            .id = "welcome-body",
           .items = std::move(welcome_items),
       },
       .actions = components::ActionRow{
@@ -46,14 +46,15 @@ render::ScreenModel WelcomeScreen::model(const ScreenContext& context) const {
                    .label = "Weiter",
                    .intent = app::navigate_to(continue_target),
                },
-               components::ActionItem{
-                   .id = "welcome-exit",
-                   .label = "Beenden",
-                   .intent = app::close_app(),
-               },
-           },
-       },
-   };
+                components::ActionItem{
+                    .id = "welcome-exit",
+                    .label = "Beenden",
+                    .intent = app::close_app(),
+                },
+            },
+        },
+        .allow_back = false,
+    };
 }
 
 }  // namespace rook::ui::screens

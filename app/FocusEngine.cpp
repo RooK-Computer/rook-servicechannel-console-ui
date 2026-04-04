@@ -115,6 +115,13 @@ FocusState FocusEngine::initial_state() const {
     return FocusState{.area = FocusArea::Dialog, .item_index = 0};
   }
 
+  if (model_.screen_id == "welcome" && !model_.actions.items.empty()) {
+    return FocusState{
+        .area = FocusArea::ActionRow,
+        .item_index = model_.actions.items.size() > 1 ? std::size_t{1} : std::size_t{0},
+    };
+  }
+
   if (model_.keyboard.has_value() && keyboard_item_count(*model_.keyboard) > 0) {
     return FocusState{
         .area = FocusArea::Keyboard,
@@ -191,14 +198,15 @@ FocusState FocusEngine::move(FocusState state, InputCommand command) const {
   }
 
   if (state.area == FocusArea::ActionRow) {
-    if (command == InputCommand::Left && state.item_index > 0) {
+    if ((command == InputCommand::Left || (model_.screen_id == "welcome" && command == InputCommand::Up)) && state.item_index > 0) {
       --state.item_index;
-    } else if (command == InputCommand::Right && state.item_index + 1 < model_.actions.items.size()) {
+    } else if ((command == InputCommand::Right || (model_.screen_id == "welcome" && command == InputCommand::Down)) &&
+               state.item_index + 1 < model_.actions.items.size()) {
       ++state.item_index;
     } else if (command == InputCommand::Up && model_.keyboard.has_value() && keyboard_item_count(*model_.keyboard) > 0) {
       state.area = FocusArea::Keyboard;
       state.item_index = keyboard_last_row_start(*model_.keyboard);
-    } else if (command == InputCommand::Up && !model_.list.items.empty()) {
+    } else if (command == InputCommand::Up && model_.screen_id != "welcome" && !model_.list.items.empty()) {
       state.area = FocusArea::List;
       state.item_index = model_.list.items.size() - 1;
     } else if (command == InputCommand::Down) {
