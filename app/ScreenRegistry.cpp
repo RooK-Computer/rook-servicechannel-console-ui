@@ -3,6 +3,8 @@
 #include <algorithm>
 
 #include "screens/KeyboardScreen.hpp"
+#include "screens/DisconnectErrorScreen.hpp"
+#include "screens/DisconnectWaitScreen.hpp"
 #include "screens/PlaceholderScreen.hpp"
 #include "screens/StatusScreen.hpp"
 #include "screens/VpnErrorScreen.hpp"
@@ -48,6 +50,8 @@ ScreenRegistry create_default_screen_registry(const AppPaths& paths) {
   ScreenRegistry registry;
   registry.register_screen("welcome", [paths] { return std::make_unique<screens::WelcomeScreen>(paths); });
   registry.register_screen("status", [] { return std::make_unique<screens::StatusScreen>(); });
+  registry.register_screen("disconnect-error", [] { return std::make_unique<screens::DisconnectErrorScreen>(); });
+  registry.register_screen("disconnect-wait", [] { return std::make_unique<screens::DisconnectWaitScreen>(); });
   registry.register_screen("wifi-scan", [] { return std::make_unique<screens::WifiScanScreen>(); });
   registry.register_screen("wifi-list", [] { return std::make_unique<screens::WifiListScreen>(); });
   registry.register_screen("keyboard", [] { return std::make_unique<screens::KeyboardScreen>(); });

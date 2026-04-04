@@ -28,6 +28,7 @@ constexpr auto kRequestTimeout = std::chrono::seconds(2);
 constexpr auto kWifiScanRequestTimeout = std::chrono::seconds(15);
 constexpr auto kConnectWifiRequestTimeout = std::chrono::seconds(15);
 constexpr auto kVpnStartRequestTimeout = std::chrono::seconds(15);
+constexpr auto kVpnStopRequestTimeout = std::chrono::seconds(15);
 constexpr auto kStartSupportRequestTimeout = std::chrono::seconds(15);
 
 std::string env_or_default(const char* name, std::string_view fallback) {
@@ -587,6 +588,10 @@ void UnixDomainAgentPort::disconnect_wifi() {
 
 void UnixDomainAgentPort::start_vpn() {
   send_request("VpnStart", std::nullopt, kVpnStartRequestTimeout);
+}
+
+void UnixDomainAgentPort::stop_vpn() {
+  send_request("VpnStop", std::nullopt, kVpnStopRequestTimeout);
 }
 
 void UnixDomainAgentPort::start_support() {

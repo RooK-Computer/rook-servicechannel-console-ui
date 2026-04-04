@@ -51,6 +51,8 @@ add_executable(rook-ui
   render/BackendInfo.cpp
   render/RmlUiRenderer.cpp
   render/TerminalRenderer.cpp
+  screens/DisconnectErrorScreen.cpp
+  screens/DisconnectWaitScreen.cpp
   screens/KeyboardScreen.cpp
   screens/PlaceholderScreen.cpp
   screens/StatusScreen.cpp

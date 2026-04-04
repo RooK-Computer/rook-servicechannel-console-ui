@@ -43,7 +43,7 @@ render::ScreenModel StatusScreen::model(const ScreenContext& context) const {
             components::ActionItem{
                 .id = "disconnect-confirm",
                 .label = "Trennen",
-                .intent = app::navigate_to("welcome"),
+                .intent = app::navigate_to("disconnect-wait"),
             },
             components::ActionItem{
                 .id = "disconnect-back",

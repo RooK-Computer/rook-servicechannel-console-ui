@@ -79,6 +79,17 @@ ActionFuture launch_start_vpn_task(std::string socket_path) {
   });
 }
 
+ActionFuture launch_disconnect_task(std::string socket_path, bool disconnect_support_wifi) {
+  return std::async(std::launch::async, [socket_path = std::move(socket_path), disconnect_support_wifi] {
+    adapters::UnixDomainAgentPort agent(std::move(socket_path));
+    agent.stop_support();
+    agent.stop_vpn();
+    if (disconnect_support_wifi) {
+      agent.disconnect_wifi();
+    }
+  });
+}
+
 std::string utf8_pop_back(std::string value) {
   while (!value.empty()) {
     const unsigned char byte = static_cast<unsigned char>(value.back());
@@ -153,12 +164,6 @@ void refresh_runtime_status(ports::AgentPort& agent, RuntimeState& runtime) {
   if (has_active_support_session(latest)) {
     if (!latest.pin.has_value()) {
       latest.pin = runtime.pin;
-    }
-    if (!latest.pin.has_value()) {
-      const auto pin = agent.get_pin();
-      if (pin.has_value()) {
-        latest.pin = *pin;
-      }
     }
   } else {
     latest.pin.reset();
@@ -314,6 +319,7 @@ int Application::run_graphical() const {
   std::optional<ActionFuture> wifi_connect_future;
   std::optional<ActionFuture> vpn_start_future;
   std::optional<ActionFuture> start_support_future;
+  std::optional<ActionFuture> disconnect_future;
   StartRequest start_request = create_start_request();
 
   if (config_.runtime_mode == RuntimeMode::Normal) {
@@ -350,6 +356,10 @@ int Application::run_graphical() const {
         } else if (runtime.vpn_state == ConnectionState::Connected && !has_active_support_session(runtime)) {
           start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
         }
+      }
+      if (active_request.screen_id == "disconnect-wait" && !disconnect_future.has_value()) {
+        runtime.last_error.reset();
+        disconnect_future.emplace(launch_disconnect_task(config_.agent_socket_path, runtime.support_wifi_active));
       }
       active_request.params = runtime_params_for_request(active_request, settings, runtime);
     }
@@ -453,6 +463,21 @@ int Application::run_graphical() const {
             screen_entered_at = now;
             break;
           }
+        }
+
+        if (active_request.screen_id == "disconnect-wait" && disconnect_future.has_value() &&
+            disconnect_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+          try {
+            disconnect_future->get();
+            disconnect_future.reset();
+            runtime = RuntimeState{};
+            session.apply(navigate_to("welcome"));
+          } catch (const std::exception& error) {
+            disconnect_future.reset();
+            session.apply(navigate_to("disconnect-error", {{"message", error.what()}}));
+          }
+          screen_entered_at = now;
+          break;
         }
 
           if (!start_support_future.has_value() && has_active_support_session(runtime) && runtime.pin.has_value()) {
@@ -563,16 +588,6 @@ int Application::run_graphical() const {
             runtime.last_error.reset();
           }
 
-          if (active_request.screen_id == "status" &&
-              active_request.params.contains("dialog") &&
-              active_request.params.at("dialog") == "disconnect" &&
-              intent->kind == IntentKind::NavigateTo &&
-              intent->target_screen_id == "welcome") {
-            agent->stop_support();
-            agent->disconnect_wifi();
-            runtime = RuntimeState{};
-          }
-
           if ((active_request.screen_id == "wifi-error" || active_request.screen_id == "vpn-error") &&
               intent->kind == IntentKind::NavigateTo &&
               intent->target_screen_id == "wifi-scan") {
@@ -670,6 +685,7 @@ int Application::run_normal() const {
   std::optional<ActionFuture> wifi_connect_future;
   std::optional<ActionFuture> vpn_start_future;
   std::optional<ActionFuture> start_support_future;
+  std::optional<ActionFuture> disconnect_future;
   refresh_runtime_status(*agent, runtime);
   StartRequest start_request = determine_normal_start_request(settings, runtime);
 
@@ -701,6 +717,10 @@ int Application::run_normal() const {
       } else if (runtime.vpn_state == ConnectionState::Connected && !has_active_support_session(runtime)) {
         start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
       }
+    }
+    if (active_request.screen_id == "disconnect-wait" && !disconnect_future.has_value()) {
+      runtime.last_error.reset();
+      disconnect_future.emplace(launch_disconnect_task(config_.agent_socket_path, runtime.support_wifi_active));
     }
     active_request.params = runtime_params_for_request(active_request, settings, runtime);
 
@@ -819,6 +839,21 @@ int Application::run_normal() const {
         }
       }
 
+      if (active_request.screen_id == "disconnect-wait" && disconnect_future.has_value() &&
+          disconnect_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+        try {
+          disconnect_future->get();
+          disconnect_future.reset();
+          runtime = RuntimeState{};
+          session.apply(navigate_to("welcome"));
+        } catch (const std::exception& error) {
+          disconnect_future.reset();
+          session.apply(navigate_to("disconnect-error", {{"message", error.what()}}));
+        }
+        screen_entered_at = now;
+        break;
+      }
+
       if (active_request.screen_id == "wifi-scan" && wifi_scan_future.has_value() &&
           wifi_scan_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
         try {
@@ -906,16 +941,6 @@ int Application::run_normal() const {
           const std::string ssid = intent->params.at("ssid");
           runtime.active_wifi_connection = ssid;
           runtime.last_error.reset();
-        }
-
-        if (active_request.screen_id == "status" &&
-            active_request.params.contains("dialog") &&
-            active_request.params.at("dialog") == "disconnect" &&
-            intent->kind == IntentKind::NavigateTo &&
-            intent->target_screen_id == "welcome") {
-          agent->stop_support();
-          agent->disconnect_wifi();
-          runtime = RuntimeState{};
         }
 
         if ((active_request.screen_id == "wifi-error" || active_request.screen_id == "vpn-error") &&
