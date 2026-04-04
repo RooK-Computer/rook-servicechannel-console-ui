@@ -1,10 +1,13 @@
 #pragma once
 
 #include <chrono>
+#include <cstdint>
+#include <deque>
 #include <optional>
 #include <string>
 
 #include "ports/AgentPort.hpp"
+#include "third_party/nlohmann/json.hpp"
 
 namespace rook::ui::adapters {
 
@@ -23,11 +26,19 @@ class UnixDomainAgentPort final : public ports::AgentPort {
   [[nodiscard]] std::optional<ports::AgentEvent> poll_event(std::chrono::milliseconds timeout) override;
 
  private:
-  std::string request_socket_path_;
-  std::string event_socket_path_;
-  std::string protocol_version_;
-  int event_fd_ = -1;
-  bool event_connect_attempted_ = false;
+  void close_connection();
+  void ensure_connected();
+  [[nodiscard]] std::string next_request_id();
+  nlohmann::json send_request(
+      std::string_view action,
+      const std::optional<nlohmann::json>& payload = std::nullopt);
+  [[nodiscard]] std::optional<nlohmann::json> read_message(std::chrono::milliseconds timeout);
+
+  std::string socket_path_;
+  std::string read_buffer_;
+  std::deque<ports::AgentEvent> pending_events_;
+  std::uint64_t next_request_id_ = 1;
+  int fd_ = -1;
 };
 
 }  // namespace rook::ui::adapters

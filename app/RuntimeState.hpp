@@ -19,7 +19,7 @@ enum class SupportState {
 };
 
 struct RuntimeError {
-  int code = 0;
+  std::string code;
   std::string message;
 };
 

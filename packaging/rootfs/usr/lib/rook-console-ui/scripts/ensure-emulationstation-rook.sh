@@ -27,7 +27,8 @@ ensure_theme_logo() {
 <!-- Managed by rook-console-integration -->
 <theme>
   <formatVersion>3</formatVersion>
-  <view name="system, basic, detailed, grid, video">
+  <include>../theme.xml</include>
+  <view name="system">
     <image name="logo">
       <path>${THEME_LOGO}</path>
       <origin>0.5 0.5</origin>

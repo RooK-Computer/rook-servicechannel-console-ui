@@ -33,7 +33,7 @@ struct PinAssignedEvent {
 struct PinExpiredEvent {};
 
 struct ErrorRaisedEvent {
-  int code = 0;
+  std::string code;
   std::string message;
 };
 
