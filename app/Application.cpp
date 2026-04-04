@@ -353,7 +353,7 @@ int Application::run_graphical() const {
         runtime.last_error.reset();
         if (runtime.vpn_state != ConnectionState::Connected && !vpn_start_future.has_value()) {
           vpn_start_future.emplace(launch_start_vpn_task(config_.agent_socket_path));
-        } else if (runtime.vpn_state == ConnectionState::Connected && !has_active_support_session(runtime)) {
+        } else if (runtime.vpn_state == ConnectionState::Connected && !runtime.pin.has_value()) {
           start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
         }
       }
@@ -440,7 +440,7 @@ int Application::run_graphical() const {
                 runtime.vpn_state = ConnectionState::Connected;
               }
               runtime.last_error.reset();
-              if (!start_support_future.has_value() && !has_active_support_session(runtime)) {
+              if (!start_support_future.has_value() && !runtime.pin.has_value()) {
                 start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
               }
             } catch (const std::exception& error) {
@@ -452,7 +452,7 @@ int Application::run_graphical() const {
           }
 
           if (!vpn_start_future.has_value() && runtime.vpn_state == ConnectionState::Connected && !start_support_future.has_value() &&
-              !has_active_support_session(runtime)) {
+              !runtime.pin.has_value()) {
             start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
           }
 
@@ -720,7 +720,7 @@ int Application::run_normal() const {
       runtime.last_error.reset();
       if (runtime.vpn_state != ConnectionState::Connected && !vpn_start_future.has_value()) {
         vpn_start_future.emplace(launch_start_vpn_task(config_.agent_socket_path));
-      } else if (runtime.vpn_state == ConnectionState::Connected && !has_active_support_session(runtime)) {
+      } else if (runtime.vpn_state == ConnectionState::Connected && !runtime.pin.has_value()) {
         start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
       }
     }
@@ -803,7 +803,7 @@ int Application::run_normal() const {
               runtime.vpn_state = ConnectionState::Connected;
             }
             runtime.last_error.reset();
-            if (!start_support_future.has_value() && !has_active_support_session(runtime)) {
+            if (!start_support_future.has_value() && !runtime.pin.has_value()) {
               start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
             }
           } catch (const std::exception& error) {
@@ -815,7 +815,7 @@ int Application::run_normal() const {
         }
 
         if (!vpn_start_future.has_value() && runtime.vpn_state == ConnectionState::Connected && !start_support_future.has_value() &&
-            !has_active_support_session(runtime)) {
+            !runtime.pin.has_value()) {
           start_support_future.emplace(launch_start_support_task(config_.agent_socket_path));
         }
 
