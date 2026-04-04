@@ -13,7 +13,7 @@ namespace rook::ui::adapters {
 
 class UnixDomainAgentPort final : public ports::AgentPort {
  public:
-  UnixDomainAgentPort();
+  explicit UnixDomainAgentPort(std::string socket_path = {});
   ~UnixDomainAgentPort() override;
 
   [[nodiscard]] app::RuntimeState get_status() override;

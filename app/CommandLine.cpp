@@ -26,6 +26,7 @@ std::string usage_text() {
   return
       "Usage:\n"
       "  rook-ui\n"
+      "  rook-ui --agent-socket <socket-path>\n"
       "  rook-ui --preview <screen-id>\n"
       "  rook-ui --preview <screen-id> --screenshot <file.bmp>\n"
       "  rook-ui --screen-list\n"
@@ -55,6 +56,16 @@ ParseResult parse_command_line(int argc, char** argv) {
       continue;
     }
 
+    if (argument == "--agent-socket") {
+      if (index + 1 >= argc) {
+        return failure("Missing socket path after --agent-socket.\n\n" + usage_text(), 2);
+      }
+
+      config.agent_socket_path = argv[index + 1];
+      ++index;
+      continue;
+    }
+
     if (argument == "--screen-list") {
       config.screen_list_only = true;
       continue;
@@ -71,10 +82,6 @@ ParseResult parse_command_line(int argc, char** argv) {
     }
 
     return failure("Unknown argument: " + std::string(argument) + "\n\n" + usage_text(), 2);
-  }
-
-  if (!config.screenshot_path.empty() && config.runtime_mode != RuntimeMode::Preview) {
-    return failure("--screenshot ist nur zusammen mit --preview verfuegbar.\n\n" + usage_text(), 2);
   }
 
   return success(std::move(config));

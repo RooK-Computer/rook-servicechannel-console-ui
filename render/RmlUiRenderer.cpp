@@ -805,10 +805,22 @@ struct RmlUiRenderer::Impl {
       sdl_initialized = true;
 
       const bool is_kmsdrm = driver == "kmsdrm";
-      const Uint32 window_flags = SDL_WINDOW_ALLOW_HIGHDPI |
-                                  ((runtime_mode == app::RuntimeMode::Preview && !is_kmsdrm) ? SDL_WINDOW_RESIZABLE : SDL_WINDOW_FULLSCREEN);
-      const int width = runtime_mode == app::RuntimeMode::Preview ? kPreviewWindowWidth : kNormalWindowWidth;
-      const int height = runtime_mode == app::RuntimeMode::Preview ? kPreviewWindowHeight : kNormalWindowHeight;
+      Uint32 window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN;
+      if (runtime_mode == app::RuntimeMode::Preview && !is_kmsdrm) {
+        window_flags |= SDL_WINDOW_RESIZABLE;
+      } else {
+        window_flags |= SDL_WINDOW_BORDERLESS;
+      }
+
+      int width = runtime_mode == app::RuntimeMode::Preview ? kPreviewWindowWidth : kNormalWindowWidth;
+      int height = runtime_mode == app::RuntimeMode::Preview ? kPreviewWindowHeight : kNormalWindowHeight;
+      if (runtime_mode != app::RuntimeMode::Preview) {
+        SDL_DisplayMode current_mode{};
+        if (SDL_GetCurrentDisplayMode(0, &current_mode) == 0 && current_mode.w > 0 && current_mode.h > 0) {
+          width = current_mode.w;
+          height = current_mode.h;
+        }
+      }
       const char* title = runtime_mode == app::RuntimeMode::Preview ? "RooK Console UI Preview" : "RooK Service";
 
       window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, window_flags);
@@ -817,9 +829,19 @@ struct RmlUiRenderer::Impl {
         return false;
       }
 
-      renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-      if (renderer == nullptr) {
+      if (runtime_mode != app::RuntimeMode::Preview) {
+        SDL_SetWindowPosition(window, 0, 0);
+        SDL_ShowWindow(window);
+        SDL_RaiseWindow(window);
+      }
+
+      if (is_kmsdrm && runtime_mode != app::RuntimeMode::Preview) {
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+      } else {
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        if (renderer == nullptr) {
+          renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+        }
       }
       if (renderer == nullptr) {
         attempt_errors.push_back(driver + ": SDL renderer creation failed: " + SDL_GetError());
@@ -867,6 +889,10 @@ struct RmlUiRenderer::Impl {
     int output_width = 0;
     int output_height = 0;
     SDL_GetRendererOutputSize(renderer, &output_width, &output_height);
+    if (output_width <= 0 || output_height <= 0) {
+      std::cerr << "RmlUi renderer output has invalid size: " << output_width << "x" << output_height << ".\n";
+      return false;
+    }
     context = Rml::CreateContext("rook-ui", Rml::Vector2i(output_width, output_height));
     if (context == nullptr) {
       std::cerr << "RmlUi context creation failed.\n";
@@ -892,9 +918,15 @@ struct RmlUiRenderer::Impl {
       return;
     }
 
+    resize_context();
+
     int output_width = 0;
     int output_height = 0;
     SDL_GetRendererOutputSize(renderer, &output_width, &output_height);
+    if (output_width <= 0 || output_height <= 0) {
+      std::cerr << "RmlUi render skipped because renderer output has invalid size: " << output_width << "x" << output_height << ".\n";
+      return;
+    }
     const auto document_data = build_document(model, theme, backend_info, focus_state, runtime_mode, output_width);
 
     if (document != nullptr) {

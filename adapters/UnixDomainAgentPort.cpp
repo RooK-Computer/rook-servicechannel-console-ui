@@ -90,7 +90,11 @@ std::optional<std::string> read_environment_value(const std::filesystem::path& f
   return std::nullopt;
 }
 
-std::string resolve_socket_path() {
+std::string resolve_socket_path(const std::string& configured_socket_path) {
+  if (!configured_socket_path.empty()) {
+    return configured_socket_path;
+  }
+
   if (const char* override_path = std::getenv("ROOK_UI_AGENT_SOCKET"); override_path != nullptr && *override_path != '\0') {
     return override_path;
   }
@@ -447,7 +451,7 @@ ports::AgentEvent parse_event(const json& message) {
 
 }  // namespace
 
-UnixDomainAgentPort::UnixDomainAgentPort() : socket_path_(resolve_socket_path()) {}
+UnixDomainAgentPort::UnixDomainAgentPort(std::string socket_path) : socket_path_(resolve_socket_path(socket_path)) {}
 
 UnixDomainAgentPort::~UnixDomainAgentPort() {
   close_connection();

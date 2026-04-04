@@ -276,7 +276,7 @@ int Application::run_graphical() const {
   if (config_.runtime_mode == RuntimeMode::Normal) {
     UiSettingsStore settings_store(config_.paths.settings_file);
     settings = settings_store.load();
-    agent = std::make_unique<adapters::UnixDomainAgentPort>();
+    agent = std::make_unique<adapters::UnixDomainAgentPort>(config_.agent_socket_path);
     refresh_runtime_status(*agent, runtime);
     start_request = determine_normal_start_request(settings, runtime);
 
@@ -301,7 +301,7 @@ int Application::run_graphical() const {
     const FocusEngine focus_engine(model);
     auto focus = focus_engine.initial_state();
     renderer.render_screen(model, active_theme, backend_info, focus);
-    if (config_.runtime_mode == RuntimeMode::Preview && !config_.screenshot_path.empty()) {
+    if (!config_.screenshot_path.empty()) {
       return renderer.capture_screenshot(config_.screenshot_path) ? 0 : 2;
     }
 
@@ -547,7 +547,7 @@ int Application::run_normal() const {
 
   UiSettingsStore settings_store(config_.paths.settings_file);
   UiSettings settings = settings_store.load();
-  auto agent = std::make_unique<adapters::UnixDomainAgentPort>();
+  auto agent = std::make_unique<adapters::UnixDomainAgentPort>(config_.agent_socket_path);
   RuntimeState runtime;
   refresh_runtime_status(*agent, runtime);
   StartRequest start_request = determine_normal_start_request(settings, runtime);

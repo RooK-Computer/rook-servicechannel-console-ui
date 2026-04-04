@@ -58,6 +58,7 @@ Useful variants:
 ```bash
 make preview SCREEN=status
 SDL_VIDEODRIVER=dummy ./build/rook-ui --preview password --screenshot /tmp/password.bmp
+SDL_VIDEODRIVER=invalid ./build/rook-ui --agent-socket ~/.config/rook-agent/agent.sock
 make package-inspect
 make rebuild
 make clean

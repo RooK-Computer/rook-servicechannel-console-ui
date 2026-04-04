@@ -12,6 +12,7 @@ struct AppConfig {
   std::string initial_screen_id = "welcome";
   std::string preview_screen_id;
   std::string screenshot_path;
+  std::string agent_socket_path;
   bool screen_list_only = false;
   AppPaths paths = detect_app_paths();
 };
