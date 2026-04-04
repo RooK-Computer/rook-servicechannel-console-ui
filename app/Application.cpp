@@ -458,14 +458,31 @@ int Application::run_graphical() const {
 
           if (start_support_future.has_value() &&
               start_support_future->wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-          try {
-            start_support_future->get();
-            start_support_future.reset();
-            refresh_runtime_status(*agent, runtime);
-            runtime.last_error.reset();
-          } catch (const std::exception& error) {
-            start_support_future.reset();
-            session.apply(navigate_to("vpn-error", {{"message", error.what()}}));
+            try {
+              start_support_future->get();
+              start_support_future.reset();
+              refresh_runtime_status(*agent, runtime);
+              runtime.last_error.reset();
+            } catch (const std::exception& error) {
+              start_support_future.reset();
+              session.apply(navigate_to("vpn-error", {{"message", error.what()}}));
+              screen_entered_at = now;
+              break;
+            }
+          }
+
+          if (!start_support_future.has_value() && has_active_support_session(runtime) && runtime.pin.has_value()) {
+            session.apply(navigate_to("status", {{"pin", *runtime.pin}}));
+            screen_entered_at = now;
+            break;
+          }
+
+          if (runtime.last_error.has_value() || now - screen_entered_at >= std::chrono::seconds(60)) {
+            IntentParams params;
+            if (runtime.last_error.has_value()) {
+              params["message"] = runtime.last_error->message;
+            }
+            session.apply(navigate_to("vpn-error", params));
             screen_entered_at = now;
             break;
           }
@@ -484,23 +501,6 @@ int Application::run_graphical() const {
           }
           screen_entered_at = now;
           break;
-        }
-
-          if (!start_support_future.has_value() && has_active_support_session(runtime) && runtime.pin.has_value()) {
-            session.apply(navigate_to("status", {{"pin", *runtime.pin}}));
-            screen_entered_at = now;
-            break;
-          }
-
-          if (runtime.last_error.has_value() || now - screen_entered_at >= std::chrono::seconds(60)) {
-            IntentParams params;
-            if (runtime.last_error.has_value()) {
-              params["message"] = runtime.last_error->message;
-            }
-            session.apply(navigate_to("vpn-error", params));
-            screen_entered_at = now;
-            break;
-          }
         }
 
         if (active_request.screen_id == "wifi-scan" && wifi_scan_future.has_value() &&
