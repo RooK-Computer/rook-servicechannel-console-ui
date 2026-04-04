@@ -18,6 +18,10 @@ bool NavigationSession::go_back() {
   return true;
 }
 
+void NavigationSession::replace_current(StartRequest request) {
+  current_ = std::move(request);
+}
+
 bool NavigationSession::apply(const Intent& intent) {
   switch (intent.kind) {
     case IntentKind::NavigateTo:

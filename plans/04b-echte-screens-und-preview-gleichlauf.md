@@ -42,3 +42,13 @@ Dieser Plan darf erst beginnen, wenn die gemeinsame SDL-/RmlUi-Laufzeitbasis aus
 * der Ordner `screens/` enthaelt die produktiven Hauptscreens
 * `rook-ui --preview welcome` und `rook-ui --preview status` laufen ueber dieselben Screen-Module wie der Normalbetrieb
 * die Architektur nutzt keine separaten Preview-Screens fuer produktive Hauptscreens
+
+## Review-Abschluss
+
+Der Plan ist nach den nachtraeglichen Review-Korrekturen fuer Font, Warte-Screens, Spinner, Welcome-Layout, Status-PIN, Footer-Bereinigung, Scrollleisten und Screen-Listing jetzt akzeptiert.
+
+Nachtraegliche 04b-Nacharbeit:
+
+* der Passwort-Screen ist jetzt nicht mehr nur ein Text-Stub, sondern enthaelt ein echtes On-Screen-Keyboard mit QWERTZ-/Shift-/Alt-/Caps-Logik
+* die Bedienregel fuer **B** ist umgesetzt: loeschen bei vorhandener Eingabe, normaler Ruecksprung nur bei leerem Passwort
+* fuer Preview und Screen-Listing existiert zusaetzlich die Alias-ID `password`, waehrend `keyboard` aus dem Konzept weiterhin gueltig bleibt

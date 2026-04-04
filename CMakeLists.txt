@@ -41,9 +41,13 @@ add_executable(rook-ui
   app/Intent.cpp
   app/NavigationSession.cpp
   app/PreviewRegistry.cpp
+  app/RuntimeState.cpp
   app/ScreenRegistry.cpp
   app/TerminalInput.cpp
   app/TextResources.cpp
+  app/UiSettings.cpp
+  adapters/UnixDomainAgentPort.cpp
+  ports/AgentPort.hpp
   render/BackendInfo.cpp
   render/RmlUiRenderer.cpp
   render/TerminalRenderer.cpp

@@ -16,6 +16,7 @@ Already in place:
 * screen flow foundation with navigation, focus handling, and shared screen models
 * product-oriented welcome, setup, waiting, error, and status screens as real modules under `screens/`
 * preview mode and normal mode using the same screen registry and screen implementations
+* local settings persistence and first real RooK-Agent runtime binding for the normal-mode flow
 
 The next implementation steps are tracked in:
 
@@ -49,12 +50,15 @@ make configure
 make build
 make run
 make preview SCREEN=welcome
+make package
 ```
 
 Useful variants:
 
 ```bash
 make preview SCREEN=status
+SDL_VIDEODRIVER=dummy ./build/rook-ui --preview password --screenshot /tmp/password.bmp
+make package-inspect
 make rebuild
 make clean
 ```
@@ -64,8 +68,14 @@ make clean
 * If no system `cmake` is available, `make tools` creates `.venv/` and installs a local CMake there.
 * RmlUi is vendored into the repository as `third_party/rmlui` and initialized with `make deps`.
 * SDL2 and FreeType are required system dependencies for the graphical host.
+* JSON handling for the agent IPC is vendored project-locally via `third_party/nlohmann/json.hpp`.
 * The default runtime path is graphical via SDL2 + RmlUi; the terminal renderer remains only as a diagnostic fallback if the graphical host cannot start.
 * Resource lookup is resilient to starting the binary from the repository root or from `build/`.
+* The public packaged launcher is `/usr/bin/rook-ui`; packaged UI resources live under `/usr/share/rook-console-ui/resources`.
+* In packaged operation the UI resolves the agent socket from `/etc/default/rook-agent` via `ROOK_AGENT_SOCKET_PATH`; without that file it falls back to the per-user config path for `rook-agent/agent.sock`.
+* `make package` builds two Debian packages with `nfpm`: `rook-console-ui` and `rook-console-integration`.
+* The integration package also installs a conservative EmulationStation theme snippet for the RooK system logo, reusing `resources/rook_logo_v1-0-0_name_bw.svg`.
+* If `nfpm` is not installed locally, the packaging targets fall back to `go run github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.1`.
 
 ## Contribution workflow
 

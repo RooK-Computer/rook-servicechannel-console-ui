@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+export ROOK_UI_RESOURCE_ROOT="${ROOK_UI_RESOURCE_ROOT:-/usr/share/rook-console-ui/resources}"
+exec /usr/lib/rook-console-ui/rook-ui-bin "$@"

@@ -1,0 +1,29 @@
+name: rook-console-integration
+arch: all
+platform: linux
+version: "@VERSION@"
+section: utils
+priority: optional
+maintainer: RooK <rook@example.invalid>
+description: |
+  RooK integration package for RetroPie / EmulationStation. Installs the
+  packaged launcher entry, the Service start script, and idempotent
+  installation logic for a systemwide RooK EmulationStation system.
+license: UNLICENSED
+depends:
+  - rook-console-ui
+contents:
+  - src: ./packaging/rootfs/etc/default/rook-console-integration
+    dst: /etc/default/rook-console-integration
+    file_info:
+      mode: 0644
+  - src: ./packaging/rootfs/usr/lib/rook-console-ui/scripts/ensure-emulationstation-rook.sh
+    dst: /usr/lib/rook-console-ui/scripts/ensure-emulationstation-rook.sh
+    file_info:
+      mode: 0755
+  - src: ./packaging/rootfs/usr/share/rook-console-ui/emulationstation/roms/Service.sh
+    dst: /usr/share/rook-console-ui/emulationstation/roms/Service.sh
+    file_info:
+      mode: 0755
+scripts:
+  postinstall: ./packaging/nfpm/scripts/rook-console-integration-postinstall.sh

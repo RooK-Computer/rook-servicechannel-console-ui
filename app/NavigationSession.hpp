@@ -19,6 +19,7 @@ class NavigationSession {
   [[nodiscard]] const StartRequest& current() const;
   [[nodiscard]] bool can_go_back() const;
   bool go_back();
+  void replace_current(StartRequest request);
   bool apply(const Intent& intent);
 
  private:

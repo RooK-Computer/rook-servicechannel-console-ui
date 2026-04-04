@@ -32,6 +32,38 @@ std::string focus_prefix(bool focused) {
   return focused ? "> " : "  ";
 }
 
+void print_keyboard(
+    const components::KeyboardModel& keyboard,
+    const std::optional<app::FocusState>& focus_state) {
+  print_line("SSID: " + keyboard.ssid);
+  print_line("Passwort:");
+  print_line(keyboard.password.empty() ? "<leer>" : keyboard.password);
+  print_line(keyboard.layout_label);
+  print_line(keyboard.helper_text);
+  print_divider();
+
+  std::size_t flat_index = 0;
+  for (const auto& row : keyboard.rows) {
+    std::string line;
+    for (const auto& item : row.items) {
+      const bool focused = focus_state.has_value() &&
+                           focus_state->area == app::FocusArea::Keyboard &&
+                           focus_state->item_index == flat_index;
+      if (!line.empty()) {
+        line += ' ';
+      }
+      line += focused ? "[" : " ";
+      line += item.label;
+      if (item.active) {
+        line += "*";
+      }
+      line += focused ? "]" : " ";
+      ++flat_index;
+    }
+    print_line(line);
+  }
+}
+
 void print_list(
     const ScreenModel& model,
     const std::optional<app::FocusState>& focus_state) {
@@ -83,6 +115,11 @@ void TerminalRenderer::render_screen(
   }
 
   if (!model.body_lines.empty()) {
+    print_divider();
+  }
+
+  if (model.keyboard.has_value()) {
+    print_keyboard(*model.keyboard, focus_state);
     print_divider();
   }
 

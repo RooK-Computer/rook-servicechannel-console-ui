@@ -29,6 +29,7 @@ class RmlUiRenderer {
       const theme::Theme& theme,
       const BackendInfo& backend_info,
       std::optional<app::FocusState> focus_state);
+  [[nodiscard]] bool capture_screenshot(const std::string& path);
   [[nodiscard]] app::InputCommand read_command(bool animate);
 
  private:

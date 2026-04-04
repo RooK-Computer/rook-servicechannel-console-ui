@@ -1,6 +1,6 @@
 # Plan 06 - Integration, Polish und Abnahme
 
-Status: blocked
+Status: done
 
 ## Ziel
 
@@ -29,10 +29,13 @@ Die UI zu einem konsistenten, reviewbaren Produktstand fuehren: End-to-End-Integ
    * offene Restthemen dokumentieren
    * Uebergang in laufende Implementierungsarbeit oder Wartung vorbereiten
 
-## Hinweise fuer spaetere Umsetzung
+## Umsetzungsergebnis
 
-* Dieser Plan ist kein Auffangbecken fuer Grundlagenarbeit
-* Vorherige Planinhalte muessen weitgehend abgeschlossen sein
+* Default-Previews fuer die produktiven Hauptscreens sind jetzt mit reviewbaren Beispielparametern hinterlegt
+* der Terminal-Fallback folgt im Normalbetrieb jetzt demselben interaktiven Laufzeitpfad wie der grafische Host, statt nur einen statischen Einzel-Screen zu rendern
+* der kontrollierte Fehlerabbruch bei fehlendem Agent-/Socket-Zugriff ist damit auch im Diagnosepfad konsistent
+* der positive Agent-Startpfad wurde gegen einen lokalen Test-Agenten verprobt; ein aktiver Service-Zustand fuehrt reproduzierbar direkt in den Status-Screen mit PIN
+* sichtbare Restdetails wie tote Footer-Hinweise in produktiven Hauptscreens sind entfernt
 
 ## Abschlusskriterien
 

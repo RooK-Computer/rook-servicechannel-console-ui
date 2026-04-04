@@ -161,6 +161,41 @@ Fuer den Service-Session-Einrichtungsdurchlauf sind derzeit mindestens diese Scr
 4. **Wartedialogscreen** fuer den VPN-Verbindungsaufbau
 5. Screen fuer den Fall, dass der **VPN-Aufbau nicht rechtzeitig zustande kommt**
 
+## Paketierung und Zielsystemintegration
+
+Fuer den Zielbetrieb auf der Konsole gelten fuer die RooK UI jetzt folgende Festlegungen:
+
+* die UI wird als **Debian-Paket mit `nfpm`** ausgeliefert
+* die Paketierung wird in **zwei getrennte Pakete** aufgeteilt:
+  * **`rook-console-ui`** fuer Binary, Laufzeitressourcen und den oeffentlichen Launcher
+  * **`rook-console-integration`** fuer RetroPie-/EmulationStation-Integration
+* das UI-Paket enthaelt:
+  * das UI-Binary
+  * alle benoetigten Laufzeitressourcen wie Texte, Fonts und sonstige Assets
+  * den oeffentlichen Starter **`/usr/bin/rook-ui`**
+* die paketierten UI-Ressourcen liegen unter **`/usr/share/rook-console-ui/resources`**
+* das Integrationspaket enthaelt:
+  * das EmulationStation-Startskript **`Service.sh`**
+  * die Installationslogik fuer die EmulationStation-Anbindung
+  * die Default-Konfiguration fuer den Pfad zur systemweiten EmulationStation-Konfiguration
+  * ein konservatives RooK-Theme-Snippet fuer die Systemgrafik
+
+Fuer die EmulationStation-Integration gilt:
+
+* die Integration arbeitet gegen die **systemweite EmulationStation-Konfiguration des Zielimages**
+* wenn dort noch kein System **`RooK`** vorhanden ist, wird es bei der Installation angelegt
+* das Integrationspaket legt dabei einen Systemeintrag mit:
+  * technischem Namen **`rook`**
+  * Anzeigenamen **`RooK`**
+  * paketiertem ROM-/Launcher-Pfad unter **`/usr/share/rook-console-ui/emulationstation/roms`**
+  * Startkommando **`/bin/sh %ROM%`**
+* der sichtbare Startpunkt innerhalb dieses Systems heisst **`Service`**
+* die Systemgrafik fuer `RooK` verwendet das paketierte Logo **`rook_logo_v1-0-0_name_bw.svg`**
+* standardmaessig wird dafuer ein RooK-Theme-Snippet unter **`/etc/emulationstation/themes/carbon/rook/theme.xml`** angelegt
+* wenn bereits ein System **`RooK`** existiert, werden **nur fehlende Eintraege ergaenzt**
+* bereits vorhandene RooK-/Service-Eintraege werden **nicht automatisch normalisiert oder ueberschrieben**
+* ein bereits vorhandenes RooK-Theme-Snippet wird ebenfalls **nicht automatisch ueberschrieben**
+
 ## WLAN-Netzauswahl
 
 Fuer die erste Version der WLAN-Netzauswahl gilt:

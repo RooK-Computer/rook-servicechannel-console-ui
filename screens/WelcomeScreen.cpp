@@ -13,6 +13,7 @@ std::string_view WelcomeScreen::title() const { return "RooK Service"; }
 
 render::ScreenModel WelcomeScreen::model(const ScreenContext& context) const {
   const auto welcome_lines = app::load_welcome_text_lines(paths_.resource_root);
+  const auto continue_target = context.param_or("continue-target", "wifi-list");
   std::vector<components::ListItem> welcome_items;
   welcome_items.reserve(welcome_lines.size());
 
@@ -35,25 +36,24 @@ render::ScreenModel WelcomeScreen::model(const ScreenContext& context) const {
       .actions = components::ActionRow{
           .id = "welcome-actions",
           .items = {
-              components::ActionItem{
-                  .id = "welcome-hide",
-                  .label = hide_welcome ? "[x] Beim naechsten Start nicht mehr anzeigen" : "[ ] Beim naechsten Start nicht mehr anzeigen",
-                  .intent = app::navigate_to("welcome", {{"hide-welcome", hide_welcome ? "false" : "true"}}),
-              },
-              components::ActionItem{
-                  .id = "welcome-continue",
-                  .label = "Weiter",
-                  .intent = app::navigate_to("wifi-list"),
-              },
-              components::ActionItem{
-                  .id = "welcome-exit",
-                  .label = "Beenden",
-                  .intent = app::close_app(),
-              },
-          },
-      },
-      .footer_hint = "Mit Stick oder Schultertasten scrollen",
-  };
+               components::ActionItem{
+                   .id = "welcome-hide",
+                   .label = hide_welcome ? "[x] Beim naechsten Start nicht mehr anzeigen" : "[ ] Beim naechsten Start nicht mehr anzeigen",
+                   .intent = app::navigate_to("welcome", {{"hide-welcome", hide_welcome ? "false" : "true"}}),
+               },
+               components::ActionItem{
+                   .id = "welcome-continue",
+                   .label = "Weiter",
+                   .intent = app::navigate_to(continue_target),
+               },
+               components::ActionItem{
+                   .id = "welcome-exit",
+                   .label = "Beenden",
+                   .intent = app::close_app(),
+               },
+           },
+       },
+   };
 }
 
 }  // namespace rook::ui::screens

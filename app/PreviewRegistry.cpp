@@ -41,13 +41,14 @@ PreviewRegistry create_default_preview_registry(const AppPaths& paths) {
   (void)paths;
   PreviewRegistry registry;
   registry.register_preview_screen("welcome");
-  registry.register_preview_screen("status");
+  registry.register_preview_screen("status", {{"pin", "4821"}});
   registry.register_preview_screen("wifi-list");
-  registry.register_preview_screen("keyboard", {{"ssid", "RooK-Setup"}});
-  registry.register_preview_screen("wifi-wait");
+  registry.register_preview_screen("keyboard", {{"ssid", "RooK-Setup"}, {"password", "S3rvice!"}});
+  registry.register_preview_screen("password", {{"ssid", "RooK-Setup"}, {"password", "S3rvice!"}});
+  registry.register_preview_screen("wifi-wait", {{"ssid", "RooK-Setup"}});
   registry.register_preview_screen("vpn-wait");
-  registry.register_preview_screen("wifi-error");
-  registry.register_preview_screen("vpn-error");
+  registry.register_preview_screen("wifi-error", {{"message", "Verbindung zum WLAN konnte nicht hergestellt werden"}});
+  registry.register_preview_screen("vpn-error", {{"message", "Verbindung konnte nicht aufgebaut werden"}});
 
   return registry;
 }

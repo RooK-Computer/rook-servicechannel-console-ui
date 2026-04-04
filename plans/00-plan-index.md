@@ -26,7 +26,7 @@ Verwendete Statuswerte:
 ## Aktueller Einstiegspunkt
 
 * Fachliche Grundlage: `docs/rook-ui-konzept.md`
-* Naechster auszufuehrender Plan: `plans/05-agent-anbindung-und-laufzeitlogik.md`
+* Naechster auszufuehrender Plan: keiner; die lokale Planreihe ist abgearbeitet und wartet auf menschliche Abnahme
 
 ## Planreihenfolge
 
@@ -40,8 +40,9 @@ Verwendete Statuswerte:
 | 03 | `plans/03-navigation-fokus-und-standardkomponenten.md` | Navigation, Intent-System, Fokuslogik, Basiskomponenten | `done` | 01 |
 | 04 | `plans/04-setup-flow-und-produkt-screens.md` | Welcome-, Setup-, Fehler- und Status-Screens | `rejected` | 03 |
 | 04b | `plans/04b-echte-screens-und-preview-gleichlauf.md` | produktive Hauptscreens als echte `screens/`-Module mit Preview-Gleichlauf | `done` | 02b, 03 |
-| 05 | `plans/05-agent-anbindung-und-laufzeitlogik.md` | Agent-Port, Status-Mapping, Persistenz, echte Laufzeitpfade | `ready` | 01, 02a, 02b, 03, 04b |
-| 06 | `plans/06-integration-polish-und-abnahme.md` | End-to-End-Integration, Texte, Preview-Vervollstaendigung, Abnahme | `blocked` | 02a, 02b, 04b, 05 |
+| 05 | `plans/05-agent-anbindung-und-laufzeitlogik.md` | Agent-Port, Status-Mapping, Persistenz, echte Laufzeitpfade | `done` | 01, 02a, 02b, 03, 04b |
+| 06 | `plans/06-integration-polish-und-abnahme.md` | End-to-End-Integration, Texte, Preview-Vervollstaendigung, Abnahme | `done` | 02a, 02b, 04b, 05 |
+| 07 | `plans/07-debian-paketierung-und-emulationstation-integration.md` | Debian-Paketierung mit nfpm sowie RetroPie-/EmulationStation-Integration | `done` | 06 |
 
 ## Pflege-Regeln
 

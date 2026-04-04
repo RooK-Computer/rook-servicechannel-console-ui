@@ -1,6 +1,6 @@
 # Plan 05 - Agent-Anbindung und Laufzeitlogik
 
-Status: ready
+Status: done
 
 ## Ziel
 
@@ -39,3 +39,15 @@ Die UI mit der echten Aussenwelt verbinden: Agent-Port, IPC-Anbindung, Status-Ma
 * Startpfad und Screenflow folgen echtem Agent-Status
 * die wichtigsten Agent-Ereignisse fuehren zu sichtbaren UI-Updates
 * Persistenz der Welcome-Option funktioniert
+
+## Umsetzungsstand
+
+`05` ist jetzt umgesetzt:
+
+* ein UI-seitiger Agent-Port und ein Unix-Domain-Socket-Adapter sind vorhanden
+* der Produktpfad loest den Agent-Socket gemaess aktueller Spezifikation ueber `/etc/default/rook-agent` und `ROOK_AGENT_SOCKET_PATH` auf; fuer ungepackte Entwicklungsstarts gilt der User-Config-Fallback
+* der produktive Startpfad liest Welcome-Persistenz und echten Agent-Status statt Mockwerten
+* bei bestehendem WLAN kann der Flow direkt in den Support-/VPN-Pfad verzweigen
+* Status-, WLAN-, Wait- und Fehler-Screens werden im Normalbetrieb mit Runtime-Daten aus Agent und Settings gespeist
+* die Welcome-Option wird ueber `settings.json` unter `.config` gelesen und geschrieben
+* der Produktpfad beendet sich kontrolliert, wenn der Agent-/IPC-Zugriff fehlt

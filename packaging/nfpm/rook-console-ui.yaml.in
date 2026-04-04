@@ -1,0 +1,27 @@
+name: rook-console-ui
+arch: "@ARCH@"
+platform: linux
+version: "@VERSION@"
+section: utils
+priority: optional
+maintainer: RooK <rook@example.invalid>
+description: |
+  RooK Console UI package with the SDL2/RmlUi binary, packaged runtime assets,
+  and the public launcher entrypoint.
+license: UNLICENSED
+depends:
+  - libfreetype6
+  - libsdl2-2.0-0
+  - libstdc++6
+  - libgcc-s1
+contents:
+  - src: ./build/rook-ui
+    dst: /usr/lib/rook-console-ui/rook-ui-bin
+    file_info:
+      mode: 0755
+  - src: ./packaging/rootfs/usr/bin/rook-ui
+    dst: /usr/bin/rook-ui
+    file_info:
+      mode: 0755
+  - src: ./resources/
+    dst: /usr/share/rook-console-ui/resources

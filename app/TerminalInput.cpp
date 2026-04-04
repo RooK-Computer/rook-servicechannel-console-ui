@@ -1,5 +1,6 @@
 #include "app/TerminalInput.hpp"
 
+#include <poll.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -75,10 +76,25 @@ InputCommand map_character(char character) {
 
 }  // namespace
 
-InputCommand TerminalInput::read_command() const {
+InputCommand TerminalInput::read_command(std::optional<std::chrono::milliseconds> timeout) const {
   ScopedRawInput input;
   if (!input.active()) {
     return InputCommand::Exit;
+  }
+
+  if (timeout.has_value()) {
+    pollfd descriptor{
+        .fd = STDIN_FILENO,
+        .events = POLLIN,
+        .revents = 0,
+    };
+    const int result = ::poll(&descriptor, 1, static_cast<int>(timeout->count()));
+    if (result == 0) {
+      return InputCommand::Tick;
+    }
+    if (result < 0) {
+      return InputCommand::Exit;
+    }
   }
 
   char character = '\0';

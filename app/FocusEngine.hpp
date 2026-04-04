@@ -10,6 +10,7 @@ namespace rook::ui::app {
 
 enum class FocusArea {
   None,
+  Keyboard,
   List,
   ActionRow,
   Dialog,

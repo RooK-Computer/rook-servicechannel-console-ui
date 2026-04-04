@@ -20,6 +20,7 @@
 #include <filesystem>
 #include <iostream>
 #include <optional>
+#include <string>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -192,6 +193,16 @@ std::string spinner_frame(Uint32 ticks) {
 
   const std::size_t index = (ticks / 120) % frames.size();
   return std::string(frames[index]);
+}
+
+std::string keyboard_button_color(bool focused, bool active) {
+  if (focused) {
+    return "#ffffff";
+  }
+  if (active) {
+    return "#ffbf00";
+  }
+  return "#ffd84d";
 }
 
 class SdlSystemInterface final : public Rml::SystemInterface {
@@ -406,16 +417,22 @@ RenderedDocument build_document(
          << "</style></head>"
          << "<body style=\"margin:0;padding:0;width:100%;height:100%;"
          << "background-color:" << theme.background_hex << ";"
-         << "color:" << theme.text_hex << ";"
-         << "font-family:&quot;JetBrains Mono&quot;;"
-         << "font-size:" << theme.typography.body_text_px << "px;\">"
-         << "<div style=\"position:relative;display:flex;flex-direction:column;"
-         << "width:100%;height:100%;padding:" << (theme.spacing_unit_px * 2) << "px;"
-         << "box-sizing:border-box;gap:" << theme.spacing_unit_px << "px;\">"
-         << "<div style=\"font-size:" << theme.typography.screen_title_px << "px;font-weight:bold;\">"
-         << escape_rml(model.title)
-         << "</div>"
-         << "<div style=\"display:flex;flex-direction:column;flex:1;min-height:0;gap:" << theme.spacing_unit_px << "px;\">";
+          << "color:" << theme.text_hex << ";"
+          << "font-family:&quot;JetBrains Mono&quot;;"
+          << "font-size:" << theme.typography.body_text_px << "px;\">"
+          << "<div style=\"position:relative;display:flex;flex-direction:column;"
+          << "width:100%;height:100%;padding:" << (theme.spacing_unit_px * 2) << "px;"
+          << "box-sizing:border-box;gap:" << theme.spacing_unit_px << "px;\">";
+
+  if (!model.keyboard.has_value()) {
+    stream << "<div style=\"font-size:" << theme.typography.screen_title_px
+           << "px;font-weight:bold;line-height:1;\">"
+           << escape_rml(model.title)
+           << "</div>";
+  }
+
+  stream
+          << "<div style=\"display:flex;flex-direction:column;flex:1;min-height:0;gap:" << theme.spacing_unit_px << "px;\">";
 
   if (model.screen_id == "status" && model.body_lines.size() >= 2) {
     stream << "<div style=\"display:flex;flex-direction:column;align-items:center;justify-content:center;"
@@ -424,9 +441,75 @@ RenderedDocument build_document(
            << escape_rml(model.body_lines[0])
            << "</div>"
            << "<div style=\"font-size:" << theme.typography.pin_digits_px << "px;font-weight:bold;line-height:1;text-align:center;\">"
-           << escape_rml(model.body_lines[1])
+            << escape_rml(model.body_lines[1])
+            << "</div>"
+            << "</div>";
+  } else if (model.keyboard.has_value()) {
+    const auto& keyboard = *model.keyboard;
+    stream << "<div style=\"display:block;\">"
+           << "<div style=\"display:block;padding:" << theme.focus_outline_px << "px;background-color:#ffd84d;"
+           << "border-radius:14px;margin-bottom:" << theme.spacing_unit_px << "px;box-sizing:border-box;\">"
+           << "<div style=\"display:block;padding:" << theme.spacing_unit_px << "px;background-color:#ffffff;color:#1a1a1a;"
+           << "border-radius:10px;box-sizing:border-box;\">"
+           << "<div style=\"display:block;width:100%;font-size:" << theme.typography.dialog_title_px
+           << "px;font-weight:bold;line-height:1;color:#1a1a1a;margin-bottom:" << (theme.spacing_unit_px / 2) << "px;\">"
+           << escape_rml(model.title)
            << "</div>"
-           << "</div>";
+           << "<div style=\"display:block;width:100%;font-size:" << (theme.typography.helper_text_px - 2)
+           << "px;font-weight:bold;color:#1a1a1a;white-space:pre-wrap;margin-bottom:" << (theme.spacing_unit_px / 3) << "px;\">SSID: "
+           << escape_rml(keyboard.ssid)
+           << "</div>"
+           << "<div style=\"display:block;width:100%;font-size:" << (theme.typography.helper_text_px - 4)
+           << "px;color:#3a3a3a;white-space:pre-wrap;margin-bottom:" << (theme.spacing_unit_px / 3) << "px;\">"
+           << escape_rml(keyboard.layout_label)
+           << "</div>"
+           << "<div style=\"display:block;width:100%;font-size:" << (theme.typography.helper_text_px - 4)
+           << "px;color:#4d4d4d;white-space:pre-wrap;margin-bottom:" << (theme.spacing_unit_px / 2) << "px;\">"
+           << escape_rml(keyboard.helper_text)
+           << "</div>"
+           << "<div style=\"display:block;width:100%;font-size:" << (theme.typography.helper_text_px - 2)
+           << "px;font-weight:bold;color:#1a1a1a;margin-bottom:" << (theme.spacing_unit_px / 4) << "px;\">Passwort</div>"
+           << "<div style=\"display:block;width:100%;padding:2px;background-color:#ffd84d;border-radius:10px;box-sizing:border-box;\">"
+           << "<div style=\"display:block;width:100%;min-height:" << (theme.typography.helper_text_px + 8) << "px;padding:" << (theme.spacing_unit_px / 4)
+           << "px " << theme.spacing_unit_px << "px;background-color:#31004d;color:#ffd84d;"
+           << "border-radius:8px;font-size:" << (theme.typography.helper_text_px + 4)
+           << "px;white-space:pre-wrap;box-sizing:border-box;\">"
+           << escape_rml(keyboard.password.empty() ? "<leer>" : keyboard.password)
+           << "</div></div>"
+            << "</div>"
+           << "</div>"
+           << "<div style=\"display:block;padding:" << theme.focus_outline_px << "px;background-color:#6f2cff;"
+           << "border-radius:14px;box-sizing:border-box;\">"
+           << "<div style=\"display:block;padding:" << (theme.spacing_unit_px / 2) << "px;background-color:#ffffff;"
+           << "border-radius:10px;box-sizing:border-box;\">";
+
+    std::size_t flat_index = 0;
+    for (const auto& row : keyboard.rows) {
+      stream << "<div style=\"display:flex;flex-direction:row;gap:" << (theme.spacing_unit_px / 2) << "px;\">";
+      for (const auto& item : row.items) {
+        const std::string element_id = "keyboard-item-" + std::to_string(flat_index);
+        const bool focused = is_focused(focus_state, app::FocusArea::Keyboard, flat_index);
+        const std::string background = focused ? "#ffd84d" : (item.active ? "#6f2cff" : "#2a2a2a");
+        const std::string color = focused ? "#1a1a1a" : (item.active ? "#ffffff" : "#ffd84d");
+        if (focused) {
+          focus_element_id = element_id;
+        }
+
+        stream << "<div id=\"" << element_id << "\" style=\"display:flex;align-items:center;justify-content:center;"
+               << "flex:" << std::max<std::size_t>(item.width, 1) << " 1 0;min-height:" << (theme.typography.helper_text_px + 6)
+               << "px;padding:" << (theme.spacing_unit_px / 4) << "px 0;border-radius:10px;background-color:" << background
+               << ";color:" << color << ";font-size:" << theme.typography.helper_text_px
+               << "px;font-weight:bold;text-align:center;box-sizing:border-box;\">"
+               << "<span style=\"display:block;line-height:1;color:" << color << ";\">"
+               << escape_rml(item.label)
+               << "</span>";
+        stream << "</div>";
+        ++flat_index;
+      }
+      stream << "</div>";
+    }
+
+    stream << "</div></div></div>";
   } else if (model.show_spinner) {
     stream << "<div style=\"display:flex;flex-direction:column;align-items:center;justify-content:center;"
            << "flex:1;min-height:0;gap:" << theme.spacing_unit_px << "px;\">";
@@ -563,7 +646,9 @@ RenderedDocument build_document(
           "button",
           element_id,
           escape_rml(action.label),
-          "min-width:220px;text-align:center;",
+          std::string(model.keyboard.has_value()
+                          ? "min-width:180px;text-align:center;font-size:28px;padding:10px 18px;"
+                          : "min-width:220px;text-align:center;"),
           focused,
           theme);
     }
@@ -837,6 +922,53 @@ struct RmlUiRenderer::Impl {
     SDL_RenderPresent(renderer);
   }
 
+  bool capture_screenshot(const std::string& path) {
+    if (renderer == nullptr) {
+      return false;
+    }
+
+    int output_width = 0;
+    int output_height = 0;
+    SDL_GetRendererOutputSize(renderer, &output_width, &output_height);
+    if (output_width <= 0 || output_height <= 0) {
+      std::cerr << "Screenshot failed: renderer has invalid output size.\n";
+      return false;
+    }
+
+    SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, output_width, output_height, 32, SDL_PIXELFORMAT_ARGB8888);
+    if (surface == nullptr) {
+      std::cerr << "Screenshot failed: " << SDL_GetError() << '\n';
+      return false;
+    }
+
+    const int read_result = SDL_RenderReadPixels(renderer, nullptr, SDL_PIXELFORMAT_ARGB8888, surface->pixels, surface->pitch);
+    if (read_result != 0) {
+      std::cerr << "Screenshot failed while reading pixels: " << SDL_GetError() << '\n';
+      SDL_FreeSurface(surface);
+      return false;
+    }
+
+    const std::filesystem::path screenshot_path(path);
+    if (screenshot_path.has_parent_path()) {
+      std::error_code error;
+      std::filesystem::create_directories(screenshot_path.parent_path(), error);
+      if (error) {
+        std::cerr << "Screenshot failed while creating parent directory: " << error.message() << '\n';
+        SDL_FreeSurface(surface);
+        return false;
+      }
+    }
+
+    const int save_result = SDL_SaveBMP(surface, screenshot_path.c_str());
+    SDL_FreeSurface(surface);
+    if (save_result != 0) {
+      std::cerr << "Screenshot failed while saving BMP: " << SDL_GetError() << '\n';
+      return false;
+    }
+
+    return true;
+  }
+
   app::InputCommand read_command(bool animate) {
     SDL_Event event{};
 
@@ -1070,6 +1202,8 @@ void RmlUiRenderer::render_screen(
   impl_->render_screen(model, theme, backend_info, focus_state);
 }
 
+bool RmlUiRenderer::capture_screenshot(const std::string& path) { return impl_->capture_screenshot(path); }
+
 app::InputCommand RmlUiRenderer::read_command(bool animate) { return impl_->read_command(animate); }
 
 }  // namespace rook::ui::render
@@ -1084,6 +1218,7 @@ RmlUiRenderer::RmlUiRenderer(RmlUiRenderer&&) noexcept = default;
 RmlUiRenderer& RmlUiRenderer::operator=(RmlUiRenderer&&) noexcept = default;
 bool RmlUiRenderer::initialize() { return false; }
 void RmlUiRenderer::render_screen(const ScreenModel&, const theme::Theme&, const BackendInfo&, std::optional<app::FocusState>) {}
+bool RmlUiRenderer::capture_screenshot(const std::string&) { return false; }
 app::InputCommand RmlUiRenderer::read_command(bool) { return app::InputCommand::Exit; }
 
 }  // namespace rook::ui::render

@@ -14,6 +14,7 @@ struct ScreenModel {
   std::vector<std::string> body_lines;
   components::ListSection list;
   components::ActionRow actions;
+  std::optional<components::KeyboardModel> keyboard;
   std::optional<components::DialogModel> dialog;
   bool show_spinner = false;
   bool allow_back = true;

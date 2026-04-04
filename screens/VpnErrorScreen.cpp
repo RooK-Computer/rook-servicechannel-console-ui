@@ -9,14 +9,14 @@ std::string_view VpnErrorScreen::id() const { return "vpn-error"; }
 std::string_view VpnErrorScreen::title() const { return "Verbindung fehlgeschlagen"; }
 
 render::ScreenModel VpnErrorScreen::model(const ScreenContext& context) const {
-  (void)context;
+  const auto message = context.param_or("message", "Verbindung konnte nicht aufgebaut werden");
   return render::ScreenModel{
       .screen_id = "vpn-error",
       .title = "Verbindung fehlgeschlagen",
-      .body_lines = {"Verbindung konnte nicht aufgebaut werden"},
-      .actions = components::ActionRow{
-          .id = "vpn-error-actions",
-          .items = {
+      .body_lines = {message},
+       .actions = components::ActionRow{
+           .id = "vpn-error-actions",
+           .items = {
               components::ActionItem{
                   .id = "vpn-error-retry",
                   .label = "WLAN wechseln",
@@ -26,11 +26,10 @@ render::ScreenModel VpnErrorScreen::model(const ScreenContext& context) const {
                   .id = "vpn-error-exit",
                   .label = "Abbrechen und Beenden",
                   .intent = app::close_app(),
-              },
-          },
-      },
-      .footer_hint = "Fehler-Screen fuer fehlgeschlagenen VPN-Aufbau.",
-  };
+               },
+           },
+       },
+   };
 }
 
 }  // namespace rook::ui::screens

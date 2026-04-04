@@ -27,6 +27,7 @@ std::string usage_text() {
       "Usage:\n"
       "  rook-ui\n"
       "  rook-ui --preview <screen-id>\n"
+      "  rook-ui --preview <screen-id> --screenshot <file.bmp>\n"
       "  rook-ui --screen-list\n"
       "  rook-ui --help\n";
 }
@@ -59,7 +60,21 @@ ParseResult parse_command_line(int argc, char** argv) {
       continue;
     }
 
+    if (argument == "--screenshot") {
+      if (index + 1 >= argc) {
+        return failure("Missing file path after --screenshot.\n\n" + usage_text(), 2);
+      }
+
+      config.screenshot_path = argv[index + 1];
+      ++index;
+      continue;
+    }
+
     return failure("Unknown argument: " + std::string(argument) + "\n\n" + usage_text(), 2);
+  }
+
+  if (!config.screenshot_path.empty() && config.runtime_mode != RuntimeMode::Preview) {
+    return failure("--screenshot ist nur zusammen mit --preview verfuegbar.\n\n" + usage_text(), 2);
   }
 
   return success(std::move(config));

@@ -49,6 +49,7 @@ ScreenRegistry create_default_screen_registry(const AppPaths& paths) {
   registry.register_screen("status", [] { return std::make_unique<screens::StatusScreen>(); });
   registry.register_screen("wifi-list", [] { return std::make_unique<screens::WifiListScreen>(); });
   registry.register_screen("keyboard", [] { return std::make_unique<screens::KeyboardScreen>(); });
+  registry.register_screen("password", [] { return std::make_unique<screens::KeyboardScreen>(); });
   registry.register_screen("wifi-wait", [] { return std::make_unique<screens::WifiWaitScreen>(); });
   registry.register_screen("vpn-wait", [] { return std::make_unique<screens::VpnWaitScreen>(); });
   registry.register_screen("wifi-error", [] { return std::make_unique<screens::WifiErrorScreen>(); });
