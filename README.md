@@ -72,9 +72,10 @@ make clean
 * The default runtime path is graphical via SDL2 + RmlUi; the terminal renderer remains only as a diagnostic fallback if the graphical host cannot start.
 * Resource lookup is resilient to starting the binary from the repository root or from `build/`.
 * The public packaged launcher is `/usr/bin/rook-ui`; packaged UI resources live under `/usr/share/rook-console-ui/resources`.
+* The packaged launcher also exports `LD_LIBRARY_PATH=/usr/lib/rook-console-ui` so the bundled `librmlui.so` is found at runtime.
 * In packaged operation the UI resolves the agent socket from `/etc/default/rook-agent` via `ROOK_AGENT_SOCKET_PATH`; without that file it falls back to the per-user config path for `rook-agent/agent.sock`.
 * `make package` builds two Debian packages with `nfpm`: `rook-console-ui` and `rook-console-integration`.
-* The integration package also installs a conservative EmulationStation theme snippet for the RooK system logo, reusing `resources/rook_logo_v1-0-0_name_bw.svg`.
+* The integration package installs a conservative EmulationStation theme snippet for `carbon-2021`, reusing `resources/rook_logo_v1-0-0_name_bw.svg`.
 * If `nfpm` is not installed locally, the packaging targets fall back to `go run github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.43.1`.
 
 ## Contribution workflow

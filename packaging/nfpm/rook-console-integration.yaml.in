@@ -25,5 +25,9 @@ contents:
     dst: /usr/share/rook-console-ui/emulationstation/roms/Service.sh
     file_info:
       mode: 0755
+  - src: ./resources/rook_logo_v1-0-0_name_bw.svg
+    dst: /usr/share/rook-console-ui/emulationstation/logo/rook-system-logo.svg
+    file_info:
+      mode: 0644
 scripts:
   postinstall: ./packaging/nfpm/scripts/rook-console-integration-postinstall.sh

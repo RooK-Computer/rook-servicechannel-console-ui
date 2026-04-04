@@ -2,4 +2,5 @@
 set -eu
 
 export ROOK_UI_RESOURCE_ROOT="${ROOK_UI_RESOURCE_ROOT:-/usr/share/rook-console-ui/resources}"
+export LD_LIBRARY_PATH="/usr/lib/rook-console-ui${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 exec /usr/lib/rook-console-ui/rook-ui-bin "$@"

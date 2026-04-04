@@ -178,6 +178,7 @@ Fuer den Zielbetrieb auf der Konsole gelten fuer die RooK UI jetzt folgende Fest
   * das EmulationStation-Startskript **`Service.sh`**
   * die Installationslogik fuer die EmulationStation-Anbindung
   * die Default-Konfiguration fuer den Pfad zur systemweiten EmulationStation-Konfiguration
+  * eine paketierte SVG-Systemgrafik fuer EmulationStation
   * ein konservatives RooK-Theme-Snippet fuer die Systemgrafik
 
 Fuer die EmulationStation-Integration gilt:
@@ -190,7 +191,8 @@ Fuer die EmulationStation-Integration gilt:
   * paketiertem ROM-/Launcher-Pfad unter **`/usr/share/rook-console-ui/emulationstation/roms`**
   * Startkommando **`/bin/sh %ROM%`**
 * der sichtbare Startpunkt innerhalb dieses Systems heisst **`Service`**
-* die Systemgrafik fuer `RooK` verwendet das paketierte Logo **`rook_logo_v1-0-0_name_bw.svg`**
+* die Systemgrafik fuer `RooK` verwendet standardmaessig das paketierte SVG **`rook_logo_v1-0-0_name_bw.svg`**
+* standardmaessig wird dafuer ein RooK-Theme-Snippet unter **`/etc/emulationstation/themes/carbon-2021/rook/theme.xml`** angelegt
 * standardmaessig wird dafuer ein RooK-Theme-Snippet unter **`/etc/emulationstation/themes/carbon/rook/theme.xml`** angelegt
 * wenn bereits ein System **`RooK`** existiert, werden **nur fehlende Eintraege ergaenzt**
 * bereits vorhandene RooK-/Service-Eintraege werden **nicht automatisch normalisiert oder ueberschrieben**

@@ -3,9 +3,10 @@ set -eu
 
 SYSTEMS_CFG="${ROOK_UI_ES_SYSTEMS_CFG:-/etc/emulationstation/es_systems.cfg}"
 ROMS_PATH="${ROOK_UI_ES_ROMS_PATH:-/usr/share/rook-console-ui/emulationstation/roms}"
-THEME_DIR="${ROOK_UI_ES_THEME_DIR:-/etc/emulationstation/themes/carbon/rook}"
-THEME_LOGO="${ROOK_UI_ES_THEME_LOGO:-/usr/share/rook-console-ui/resources/rook_logo_v1-0-0_name_bw.svg}"
+THEME_DIR="${ROOK_UI_ES_THEME_DIR:-/etc/emulationstation/themes/carbon-2021/rook}"
+THEME_LOGO="${ROOK_UI_ES_THEME_LOGO:-/usr/share/rook-console-ui/emulationstation/logo/rook-system-logo.svg}"
 TMP_FILE="$(mktemp)"
+THEME_FILE="${THEME_DIR}/theme.xml"
 
 cleanup() {
   rm -f "$TMP_FILE"
@@ -14,12 +15,16 @@ cleanup() {
 trap cleanup EXIT
 
 ensure_theme_logo() {
-  if [ -f "${THEME_DIR}/theme.xml" ]; then
+  if [ -f "${THEME_FILE}" ] &&
+     ! grep -q 'Managed by rook-console-integration' "${THEME_FILE}" &&
+     ! grep -q 'rook_logo_v1-0-0_name_bw.svg' "${THEME_FILE}" &&
+     ! grep -q '/usr/share/rook-console-ui/emulationstation/logo/rook-system-logo.svg' "${THEME_FILE}"; then
     return
   fi
 
   mkdir -p "${THEME_DIR}"
-  cat > "${THEME_DIR}/theme.xml" <<EOF
+  cat > "${THEME_FILE}" <<EOF
+<!-- Managed by rook-console-integration -->
 <theme>
   <formatVersion>3</formatVersion>
   <view name="system, basic, detailed, grid, video">
@@ -32,6 +37,13 @@ ensure_theme_logo() {
   </view>
 </theme>
 EOF
+  chmod 0644 "${THEME_FILE}"
+}
+
+ensure_systems_cfg_mode() {
+  if [ -f "$SYSTEMS_CFG" ]; then
+    chmod 0644 "$SYSTEMS_CFG"
+  fi
 }
 
 SYSTEM_BLOCK=$(cat <<EOF
@@ -56,12 +68,14 @@ if [ ! -f "$SYSTEMS_CFG" ]; then
 ${SYSTEM_BLOCK}
 </systemList>
 EOF
+  ensure_systems_cfg_mode
   exit 0
 fi
 
 if grep -qi '<name>[[:space:]]*rook[[:space:]]*</name>' "$SYSTEMS_CFG" || \
    grep -qi '<fullname>[[:space:]]*RooK[[:space:]]*</fullname>' "$SYSTEMS_CFG"; then
   ensure_theme_logo
+  ensure_systems_cfg_mode
   exit 0
 fi
 
@@ -84,3 +98,4 @@ awk -v system_block="$SYSTEM_BLOCK" '
 ' "$SYSTEMS_CFG" > "$TMP_FILE"
 
 mv "$TMP_FILE" "$SYSTEMS_CFG"
+ensure_systems_cfg_mode
