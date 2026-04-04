@@ -4,6 +4,7 @@ namespace rook::ui::app {
 
 enum class InputCommand {
   None,
+  Tick,
   Up,
   Down,
   Left,

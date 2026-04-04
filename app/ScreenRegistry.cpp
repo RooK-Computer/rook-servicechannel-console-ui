@@ -2,7 +2,15 @@
 
 #include <algorithm>
 
+#include "screens/KeyboardScreen.hpp"
 #include "screens/PlaceholderScreen.hpp"
+#include "screens/StatusScreen.hpp"
+#include "screens/VpnErrorScreen.hpp"
+#include "screens/VpnWaitScreen.hpp"
+#include "screens/WelcomeScreen.hpp"
+#include "screens/WifiErrorScreen.hpp"
+#include "screens/WifiListScreen.hpp"
+#include "screens/WifiWaitScreen.hpp"
 
 namespace rook::ui::app {
 
@@ -35,45 +43,16 @@ std::vector<std::string> ScreenRegistry::ids() const {
   return result;
 }
 
-ScreenRegistry create_default_screen_registry() {
+ScreenRegistry create_default_screen_registry(const AppPaths& paths) {
   ScreenRegistry registry;
-
-  const auto register_placeholder = [&registry](std::string id, std::string title, std::vector<std::string> body, std::vector<std::string> actions) {
-    const std::string registry_id = id;
-
-    registry.register_screen(registry_id, [screen_id = std::move(id), screen_title = std::move(title), body_lines = std::move(body), action_lines = std::move(actions)] {
-      components::ActionRow action_row{
-          .id = screen_id + "-actions",
-          .items = {},
-      };
-
-      for (std::size_t index = 0; index < action_lines.size(); ++index) {
-        action_row.items.push_back(components::ActionItem{
-            .id = screen_id + "-action-" + std::to_string(index),
-            .label = action_lines[index],
-            .intent = app::noop(),
-        });
-      }
-
-      return std::make_unique<screens::PlaceholderScreen>(
-          render::ScreenModel{
-              .screen_id = screen_id,
-              .title = screen_title,
-              .body_lines = body_lines,
-              .actions = std::move(action_row),
-              .footer_hint = "Normalbetrieb-Stub aus Plan 01/02.",
-          });
-    });
-  };
-
-  register_placeholder("welcome", "RooK Service", {"Willkommensbildschirm ist verdrahtet."}, {"Weiter", "Beenden"});
-  register_placeholder("status", "RooK Service", {"Service-PIN", "473 921"}, {"Trennen", "Beenden"});
-  register_placeholder("wifi-list", "Mit WLAN verbinden", {"WLAN-Liste ist verdrahtet."}, {"Auswaehlen", "Zurueck"});
-  register_placeholder("keyboard", "WLAN-Passwort eingeben", {"Keyboard-Screen ist verdrahtet."}, {"Verbinden", "Zurueck"});
-  register_placeholder("wifi-wait", "Mit WLAN verbinden", {"Verbindung zum WLAN wird hergestellt"}, {});
-  register_placeholder("vpn-wait", "Sichere Verbindung", {"Sichere Verbindung wird aufgebaut"}, {});
-  register_placeholder("wifi-error", "WLAN-Verbindung fehlgeschlagen", {"Verbindung zum WLAN konnte nicht hergestellt werden"}, {"Zurueck zur WLAN-Liste", "Abbrechen und Beenden"});
-  register_placeholder("vpn-error", "Verbindung fehlgeschlagen", {"Verbindung konnte nicht aufgebaut werden"}, {"WLAN wechseln", "Abbrechen und Beenden"});
+  registry.register_screen("welcome", [paths] { return std::make_unique<screens::WelcomeScreen>(paths); });
+  registry.register_screen("status", [] { return std::make_unique<screens::StatusScreen>(); });
+  registry.register_screen("wifi-list", [] { return std::make_unique<screens::WifiListScreen>(); });
+  registry.register_screen("keyboard", [] { return std::make_unique<screens::KeyboardScreen>(); });
+  registry.register_screen("wifi-wait", [] { return std::make_unique<screens::WifiWaitScreen>(); });
+  registry.register_screen("vpn-wait", [] { return std::make_unique<screens::VpnWaitScreen>(); });
+  registry.register_screen("wifi-error", [] { return std::make_unique<screens::WifiErrorScreen>(); });
+  registry.register_screen("vpn-error", [] { return std::make_unique<screens::VpnErrorScreen>(); });
 
   return registry;
 }

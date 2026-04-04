@@ -23,7 +23,7 @@ if(ROOK_UI_WITH_RMLUI)
     set(RMLUI_SAMPLES OFF CACHE BOOL "Disable vendored RmlUi samples" FORCE)
     set(RMLUI_LUA_BINDINGS OFF CACHE BOOL "Disable vendored RmlUi Lua bindings" FORCE)
     set(RMLUI_PRECOMPILED_HEADERS OFF CACHE BOOL "Disable vendored RmlUi precompiled headers" FORCE)
-    set(RMLUI_FONT_ENGINE "none" CACHE STRING "Disable vendored RmlUi font engine" FORCE)
+    set(RMLUI_FONT_ENGINE "freetype" CACHE STRING "Build vendored RmlUi with FreeType font support" FORCE)
     add_subdirectory("${ROOK_UI_RMLUI_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/third_party/rmlui" EXCLUDE_FROM_ALL)
   else()
     message(FATAL_ERROR
@@ -45,8 +45,17 @@ add_executable(rook-ui
   app/TerminalInput.cpp
   app/TextResources.cpp
   render/BackendInfo.cpp
+  render/RmlUiRenderer.cpp
   render/TerminalRenderer.cpp
+  screens/KeyboardScreen.cpp
   screens/PlaceholderScreen.cpp
+  screens/StatusScreen.cpp
+  screens/VpnErrorScreen.cpp
+  screens/VpnWaitScreen.cpp
+  screens/WelcomeScreen.cpp
+  screens/WifiErrorScreen.cpp
+  screens/WifiListScreen.cpp
+  screens/WifiWaitScreen.cpp
   theme/Theme.cpp
 )
 
@@ -62,4 +71,8 @@ endif()
 if(TARGET RmlUi::Core)
   target_link_libraries(rook-ui PRIVATE RmlUi::Core)
   target_compile_definitions(rook-ui PRIVATE ROOK_UI_HAS_RMLUI=1)
+endif()
+
+if(TARGET SDL2::SDL2 AND TARGET RmlUi::Core)
+  target_compile_definitions(rook-ui PRIVATE RMLUI_SDL_VERSION_MAJOR=2)
 endif()

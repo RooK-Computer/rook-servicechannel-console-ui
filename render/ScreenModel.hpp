@@ -15,6 +15,8 @@ struct ScreenModel {
   components::ListSection list;
   components::ActionRow actions;
   std::optional<components::DialogModel> dialog;
+  bool show_spinner = false;
+  bool allow_back = true;
   std::string footer_hint;
 };
 

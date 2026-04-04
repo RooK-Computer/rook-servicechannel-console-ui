@@ -1,4 +1,5 @@
-Mit RooK Service kann eine Support-Sitzung direkt an dieser Konsole gestartet werden.
-Nach dem Verbindungsaufbau zeigt die Anwendung eine Service-PIN an.
-Vor dem Start der Sitzung kann bei Bedarf zuerst ein WLAN ausgewaehlt werden.
-Anschliessend wird eine sichere Verbindung aufgebaut.
+Wenn du ein Problem mit deiner Cartridge hast, dann hat dich vermutlich der freundliche Nerd aus der Nachbarschaft hier her geschickt und sich mit dir verabredet. Dann bist du hier genau richtig.
+Damit dir geholfen werden kann, wird eine WLAN-Verbindung gebraucht. Falls du auf dieser Cartridge schon eine eingerichtet hast, nutzen wir die. Falls nicht, richten wir jetzt kurzfristig eine ein. Die wird nur solange bestehen, wie du diese Support-Verbindung brauchst. Wenn du sie trennst, wird das WLAN wieder ausgeschaltet.
+Ausserdem: der freundliche Nerd aus der Nachbarschaft kann sich nur in deine Konsole einwählen, solange du die Verbindung nicht beendest oder die Konsole ausschaltest. Du hast die ganze Zeit die volle Kontrolle darüber.
+Nach dem Verbindungsaufbau bekommst du eine PIN angezeigt. Die musst du weitergeben.
+Wenn ihr fertig seid, kehre wieder hierher zurück und trenne die Verbindung oder schalte die RooK aus.

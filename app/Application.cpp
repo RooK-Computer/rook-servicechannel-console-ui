@@ -4,6 +4,7 @@
 
 #include "app/TerminalInput.hpp"
 #include "render/BackendInfo.hpp"
+#include "render/RmlUiRenderer.hpp"
 #include "render/TerminalRenderer.hpp"
 #include "theme/Theme.hpp"
 
@@ -12,7 +13,7 @@ namespace rook::ui::app {
 Application::Application(AppConfig config)
     : config_(std::move(config)),
       preview_registry_(create_default_preview_registry(config_.paths)),
-      screen_registry_(create_default_screen_registry()) {}
+      screen_registry_(create_default_screen_registry(config_.paths)) {}
 
 const std::string& Application::resolve_start_screen() const {
   if (config_.runtime_mode == RuntimeMode::Preview) {
@@ -23,10 +24,111 @@ const std::string& Application::resolve_start_screen() const {
 }
 
 StartRequest Application::create_start_request() const {
+  if (config_.runtime_mode == RuntimeMode::Preview) {
+    return preview_registry_.start_request_for(resolve_start_screen());
+  }
+
   return StartRequest{
       .screen_id = resolve_start_screen(),
       .params = {},
   };
+}
+
+bool Application::is_known_screen_id(std::string_view screen_id) const {
+  if (config_.runtime_mode == RuntimeMode::Preview && preview_registry_.contains(screen_id)) {
+    return true;
+  }
+
+  return screen_registry_.contains(screen_id);
+}
+
+render::ScreenModel Application::resolve_model(const StartRequest& request) const {
+  auto screen = screen_registry_.create(request.screen_id);
+  if (screen == nullptr) {
+    throw std::runtime_error("unknown screen id");
+  }
+
+  return screen->model(screens::ScreenContext{
+      .runtime_mode = config_.runtime_mode,
+      .params = request.params,
+  });
+}
+
+int Application::print_screen_list(std::ostream& out) const {
+  for (const auto& id : screen_registry_.ids()) {
+    out << id << '\n';
+  }
+
+  return 0;
+}
+
+int Application::run_graphical() const {
+  if (!is_known_screen_id(resolve_start_screen())) {
+    std::cerr << "Unknown screen id: " << resolve_start_screen() << '\n';
+    return 2;
+  }
+
+  render::RmlUiRenderer renderer(config_.paths, config_.runtime_mode);
+  if (!renderer.initialize()) {
+    std::cerr << "Graphical SDL2/RmlUi host could not be started; falling back to terminal renderer.\n";
+    return config_.runtime_mode == RuntimeMode::Preview ? run_preview() : run_normal();
+  }
+
+  const auto backend_info = render::detect_backend_info();
+  const auto& active_theme = theme::default_theme();
+  NavigationSession session(create_start_request());
+
+  while (true) {
+    const auto model = resolve_model(session.current());
+    const FocusEngine focus_engine(model);
+    auto focus = focus_engine.initial_state();
+    renderer.render_screen(model, active_theme, backend_info, focus);
+
+    while (true) {
+      const auto command = renderer.read_command(model.show_spinner);
+      if (command == InputCommand::Exit) {
+        return 0;
+      }
+
+      if (command == InputCommand::None || command == InputCommand::Tick) {
+        renderer.render_screen(model, active_theme, backend_info, focus);
+        continue;
+      }
+
+      if (command == InputCommand::Back) {
+        if (!model.allow_back) {
+          renderer.render_screen(model, active_theme, backend_info, focus);
+          continue;
+        }
+        if (!session.go_back()) {
+          return 0;
+        }
+        break;
+      }
+
+      if (command == InputCommand::Confirm) {
+        const auto intent = focus_engine.intent_for(focus);
+        if (!intent.has_value()) {
+          continue;
+        }
+
+        if (intent->kind == IntentKind::GoBack) {
+          if (!session.go_back()) {
+            return 0;
+          }
+          break;
+        }
+
+        if (!session.apply(*intent)) {
+          return 0;
+        }
+        break;
+      }
+
+      focus = focus_engine.move(focus, command);
+      renderer.render_screen(model, active_theme, backend_info, focus);
+    }
+  }
 }
 
 int Application::run_preview() const {
@@ -47,7 +149,7 @@ int Application::run_preview() const {
   const TerminalInput input;
 
   while (true) {
-    const auto model = preview_registry_.model_for(session.current());
+    const auto model = resolve_model(session.current());
     const FocusEngine focus_engine(model);
     auto focus = focus_engine.initial_state();
     renderer.render_screen(model, active_theme, backend_info, focus);
@@ -92,7 +194,7 @@ int Application::run_preview() const {
 
 int Application::run_normal() const {
   const std::string& screen_id = resolve_start_screen();
-  if (!preview_registry_.contains(screen_id) && screen_registry_.create(screen_id) == nullptr) {
+  if (screen_registry_.create(screen_id) == nullptr) {
     std::cerr << "Unknown screen id: " << screen_id << '\n';
     std::cerr << "Known screen ids:";
     for (const auto& id : screen_registry_.ids()) {
@@ -105,14 +207,7 @@ int Application::run_normal() const {
   const auto backend_info = render::detect_backend_info();
   const auto& active_theme = theme::default_theme();
 
-  render::ScreenModel model;
-  if (preview_registry_.contains(screen_id)) {
-    model = preview_registry_.model_for(create_start_request());
-  } else {
-    auto screen = screen_registry_.create(screen_id);
-    model = screen->model(config_.runtime_mode);
-  }
-  model.footer_hint = "Normalmodus-Bootstrap. Naechste Ausbaustufe: RmlUi/SDL2-Backend.";
+  auto model = resolve_model(create_start_request());
 
   const render::TerminalRenderer renderer;
   std::cout << "config-root: " << config_.paths.config_root << '\n';
@@ -123,11 +218,11 @@ int Application::run_normal() const {
 }
 
 int Application::run() const {
-  if (config_.runtime_mode == RuntimeMode::Preview) {
-    return run_preview();
+  if (config_.screen_list_only) {
+    return print_screen_list(std::cout);
   }
 
-  return run_normal();
+  return run_graphical();
 }
 
 }  // namespace rook::ui::app

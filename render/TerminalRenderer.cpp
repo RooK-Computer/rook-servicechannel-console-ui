@@ -106,10 +106,6 @@ void TerminalRenderer::render_screen(
     print_divider();
   }
 
-  print_line(theme::describe_theme(theme));
-  print_line(describe_backend_info(backend_info));
-  print_line(model.footer_hint);
-  print_divider();
   std::cout << "Steuerung: Pfeile oder WASD, Enter/Space bestaetigt, B geht zurueck, Escape/Q beendet.\n";
 }
 

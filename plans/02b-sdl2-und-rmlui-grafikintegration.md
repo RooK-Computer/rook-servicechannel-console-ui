@@ -1,6 +1,6 @@
 # Plan 02b - SDL2- und grafische RmlUi-Integration
 
-Status: ready
+Status: done
 
 ## Ziel
 
@@ -27,6 +27,8 @@ Wenn diese Voraussetzungen spaeter wieder nicht erfuellt sind:
 * RmlUi rendert die echte UI grafisch statt ueber den Terminal-Fallback
 * Preview laeuft sichtbar grafisch ueber **denselben App-/Screen-Codepfad**
 * die bestehende Screen-, Fokus- und Navigationslogik bleibt erhalten und wird nur an den echten Renderpfad angebunden
+* RmlUi baut jetzt mit FreeType-Schriftengine und laedt projektlokal verfuegbare Schriftdateien aus der vendored RmlUi-Abhaengigkeit
+* SDL-Eingaben fuer Tastatur und Gamepad laufen ueber denselben grafischen Host
 
 ## Arbeitspakete
 

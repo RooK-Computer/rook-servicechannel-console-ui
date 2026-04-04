@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "app/AppPaths.hpp"
 #include "screens/Screen.hpp"
 
 namespace rook::ui::app {
@@ -25,6 +26,6 @@ class ScreenRegistry {
   std::unordered_map<std::string, ScreenFactory> factories_;
 };
 
-ScreenRegistry create_default_screen_registry();
+ScreenRegistry create_default_screen_registry(const AppPaths& paths);
 
 }  // namespace rook::ui::app

@@ -12,9 +12,10 @@ Already in place:
 
 * local UI concept and implementation plans
 * C++ / CMake project bootstrap
-* preview mode with interactive terminal fallback
-* screen flow foundation with navigation, focus handling, and basic screen models
-* product-oriented preview states for welcome, setup, waiting, error, and status screens
+* graphical SDL2/RmlUi host for preview and normal mode
+* screen flow foundation with navigation, focus handling, and shared screen models
+* product-oriented welcome, setup, waiting, error, and status screens as real modules under `screens/`
+* preview mode and normal mode using the same screen registry and screen implementations
 
 The next implementation steps are tracked in:
 
@@ -62,8 +63,9 @@ make clean
 
 * If no system `cmake` is available, `make tools` creates `.venv/` and installs a local CMake there.
 * RmlUi is vendored into the repository as `third_party/rmlui` and initialized with `make deps`.
-* SDL2 remains an external system dependency for the later graphical integration work.
-* In the current environment the preview path uses a terminal-based fallback renderer.
+* SDL2 and FreeType are required system dependencies for the graphical host.
+* The default runtime path is graphical via SDL2 + RmlUi; the terminal renderer remains only as a diagnostic fallback if the graphical host cannot start.
+* Resource lookup is resilient to starting the binary from the repository root or from `build/`.
 
 ## Contribution workflow
 

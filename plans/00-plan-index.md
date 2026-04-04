@@ -26,7 +26,7 @@ Verwendete Statuswerte:
 ## Aktueller Einstiegspunkt
 
 * Fachliche Grundlage: `docs/rook-ui-konzept.md`
-* Naechster auszufuehrender Plan: `plans/02b-sdl2-und-rmlui-grafikintegration.md`
+* Naechster auszufuehrender Plan: `plans/05-agent-anbindung-und-laufzeitlogik.md`
 
 ## Planreihenfolge
 
@@ -36,11 +36,11 @@ Verwendete Statuswerte:
 | 01 | `plans/01-projektgrundlage-und-app-shell.md` | Build, Ordnerstruktur, App-Shell, Laufzeitmodi | `done` | Konzept |
 | 02 | `plans/02-rendering-theme-und-preview.md` | RmlUi/SDL-Rendering, Theme-Tokens, Preview-Modus | `rejected` | 01 |
 | 02a | `plans/02a-rmlui-ins-projekt-einbetten.md` | RmlUi als projektlokale Drittanbieterabhaengigkeit einbetten | `done` | 01 |
-| 02b | `plans/02b-sdl2-und-rmlui-grafikintegration.md` | echte grafische SDL2-/RmlUi-Integration nachziehen | `ready` | 01, 02a |
+| 02b | `plans/02b-sdl2-und-rmlui-grafikintegration.md` | echte grafische SDL2-/RmlUi-Integration nachziehen | `done` | 01, 02a |
 | 03 | `plans/03-navigation-fokus-und-standardkomponenten.md` | Navigation, Intent-System, Fokuslogik, Basiskomponenten | `done` | 01 |
 | 04 | `plans/04-setup-flow-und-produkt-screens.md` | Welcome-, Setup-, Fehler- und Status-Screens | `rejected` | 03 |
-| 04b | `plans/04b-echte-screens-und-preview-gleichlauf.md` | produktive Hauptscreens als echte `screens/`-Module mit Preview-Gleichlauf | `blocked` | 02b, 03 |
-| 05 | `plans/05-agent-anbindung-und-laufzeitlogik.md` | Agent-Port, Status-Mapping, Persistenz, echte Laufzeitpfade | `blocked` | 01, 02a, 02b, 03, 04b |
+| 04b | `plans/04b-echte-screens-und-preview-gleichlauf.md` | produktive Hauptscreens als echte `screens/`-Module mit Preview-Gleichlauf | `done` | 02b, 03 |
+| 05 | `plans/05-agent-anbindung-und-laufzeitlogik.md` | Agent-Port, Status-Mapping, Persistenz, echte Laufzeitpfade | `ready` | 01, 02a, 02b, 03, 04b |
 | 06 | `plans/06-integration-polish-und-abnahme.md` | End-to-End-Integration, Texte, Preview-Vervollstaendigung, Abnahme | `blocked` | 02a, 02b, 04b, 05 |
 
 ## Pflege-Regeln

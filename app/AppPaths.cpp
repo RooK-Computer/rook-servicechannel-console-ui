@@ -22,15 +22,31 @@ std::filesystem::path detect_config_root() {
   return detect_home_directory() / ".config" / "rook-ui";
 }
 
+std::filesystem::path detect_project_root() {
+  for (auto current = std::filesystem::current_path(); !current.empty(); current = current.parent_path()) {
+    if (std::filesystem::exists(current / "resources") &&
+        std::filesystem::exists(current / "third_party" / "rmlui")) {
+      return current;
+    }
+
+    if (current == current.root_path()) {
+      break;
+    }
+  }
+
+  return std::filesystem::current_path();
+}
+
 }  // namespace
 
 AppPaths detect_app_paths() {
   const auto config_root = detect_config_root();
+  const auto project_root = detect_project_root();
 
   return AppPaths{
       .config_root = config_root,
       .settings_file = config_root / "settings.json",
-      .resource_root = std::filesystem::current_path() / "resources",
+      .resource_root = project_root / "resources",
   };
 }
 

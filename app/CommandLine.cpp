@@ -27,6 +27,7 @@ std::string usage_text() {
       "Usage:\n"
       "  rook-ui\n"
       "  rook-ui --preview <screen-id>\n"
+      "  rook-ui --screen-list\n"
       "  rook-ui --help\n";
 }
 
@@ -50,6 +51,11 @@ ParseResult parse_command_line(int argc, char** argv) {
       config.runtime_mode = RuntimeMode::Preview;
       config.preview_screen_id = argv[index + 1];
       ++index;
+      continue;
+    }
+
+    if (argument == "--screen-list") {
+      config.screen_list_only = true;
       continue;
     }
 

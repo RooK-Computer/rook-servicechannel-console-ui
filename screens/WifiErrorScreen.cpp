@@ -1,0 +1,36 @@
+#include "screens/WifiErrorScreen.hpp"
+
+#include "app/Intent.hpp"
+
+namespace rook::ui::screens {
+
+std::string_view WifiErrorScreen::id() const { return "wifi-error"; }
+
+std::string_view WifiErrorScreen::title() const { return "WLAN-Verbindung fehlgeschlagen"; }
+
+render::ScreenModel WifiErrorScreen::model(const ScreenContext& context) const {
+  (void)context;
+  return render::ScreenModel{
+      .screen_id = "wifi-error",
+      .title = "WLAN-Verbindung fehlgeschlagen",
+      .body_lines = {"Verbindung zum WLAN konnte nicht hergestellt werden"},
+      .actions = components::ActionRow{
+          .id = "wifi-error-actions",
+          .items = {
+              components::ActionItem{
+                  .id = "wifi-error-back",
+                  .label = "Zurueck zur WLAN-Liste",
+                  .intent = app::navigate_to("wifi-list"),
+              },
+              components::ActionItem{
+                  .id = "wifi-error-exit",
+                  .label = "Abbrechen und Beenden",
+                  .intent = app::close_app(),
+              },
+          },
+      },
+      .footer_hint = "Fehler-Screen fuer den fehlgeschlagenen WLAN-Aufbau.",
+  };
+}
+
+}  // namespace rook::ui::screens

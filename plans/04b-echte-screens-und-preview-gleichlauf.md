@@ -1,6 +1,6 @@
 # Plan 04b - Echte Screens und Preview-Gleichlauf
 
-Status: blocked
+Status: done
 
 ## Ziel
 
@@ -16,6 +16,9 @@ Dieser Plan darf erst beginnen, wenn die gemeinsame SDL-/RmlUi-Laufzeitbasis aus
 * dieselben Screen-Module laufen im Preview und im Normalbetrieb
 * Preview-Szenarien liefern nur Daten und Startzustand, aber keinen separaten UI-Codepfad
 * die in `docs/rook-ui-konzept.md` definierte Microcopy und Screen-Struktur ist in diese Module uebernommen
+* die grafische UI laedt projektlokale `JetBrains Mono`-Schriftdateien aus `resources/fonts`
+* WLAN- und VPN-Warte-Screens sind auf nicht-interaktive Wartebildschirme mit animiertem Spinner zurueckgefuehrt
+* der Start aus Repo-Root und aus `build/` nutzt denselben Ressourcenpfad und kippt nicht mehr wegen des Working Directories in den Text-Fallback
 
 ## Arbeitspakete
 
