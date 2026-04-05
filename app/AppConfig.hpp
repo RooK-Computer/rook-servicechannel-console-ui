@@ -11,6 +11,7 @@ struct AppConfig {
   RuntimeMode runtime_mode = RuntimeMode::Normal;
   std::string initial_screen_id = "welcome";
   std::string preview_screen_id;
+  std::string preview_scenario;
   std::string screenshot_path;
   std::string agent_socket_path;
   bool screen_list_only = false;

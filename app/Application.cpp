@@ -43,6 +43,19 @@ bool is_password_screen(std::string_view screen_id) {
   return screen_id == "keyboard" || screen_id == "password";
 }
 
+void apply_preview_scenario(StartRequest& request, std::string_view scenario) {
+  if (scenario.empty()) {
+    return;
+  }
+
+  if (request.screen_id == "status" && scenario == "disconnect-dialog") {
+    request.params["dialog"] = "disconnect";
+    return;
+  }
+
+  throw std::runtime_error("unknown preview scenario '" + std::string(scenario) + "' for screen '" + request.screen_id + "'");
+}
+
 bool has_requested_wifi_connection(const RuntimeState& state, std::string_view ssid) {
   if (state.support_wifi_active || state.wifi_state == ConnectionState::Connected) {
     return true;
@@ -256,7 +269,9 @@ const std::string& Application::resolve_start_screen() const {
 
 StartRequest Application::create_start_request() const {
   if (config_.runtime_mode == RuntimeMode::Preview) {
-    return preview_registry_.start_request_for(resolve_start_screen());
+    StartRequest request = preview_registry_.start_request_for(resolve_start_screen());
+    apply_preview_scenario(request, config_.preview_scenario);
+    return request;
   }
 
   return StartRequest{

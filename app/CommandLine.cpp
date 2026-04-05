@@ -28,6 +28,7 @@ std::string usage_text() {
       "  rook-ui\n"
       "  rook-ui --agent-socket <socket-path>\n"
       "  rook-ui --preview <screen-id>\n"
+      "  rook-ui --preview <screen-id> --scenario <name>\n"
       "  rook-ui --preview <screen-id> --screenshot <file.bmp>\n"
       "  rook-ui --screen-list\n"
       "  rook-ui --help\n";
@@ -52,6 +53,16 @@ ParseResult parse_command_line(int argc, char** argv) {
 
       config.runtime_mode = RuntimeMode::Preview;
       config.preview_screen_id = argv[index + 1];
+      ++index;
+      continue;
+    }
+
+    if (argument == "--scenario") {
+      if (index + 1 >= argc) {
+        return failure("Missing scenario name after --scenario.\n\n" + usage_text(), 2);
+      }
+
+      config.preview_scenario = argv[index + 1];
       ++index;
       continue;
     }
@@ -82,6 +93,10 @@ ParseResult parse_command_line(int argc, char** argv) {
     }
 
     return failure("Unknown argument: " + std::string(argument) + "\n\n" + usage_text(), 2);
+  }
+
+  if (!config.preview_scenario.empty() && config.runtime_mode != RuntimeMode::Preview) {
+    return failure("--scenario requires --preview.\n\n" + usage_text(), 2);
   }
 
   return success(std::move(config));

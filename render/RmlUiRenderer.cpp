@@ -658,25 +658,34 @@ RenderedDocument build_document(
   stream << "</div>";
 
   if (model.dialog.has_value()) {
-    stream << "<div style=\"position:absolute;inset:0;background-color:"
-           << css_rgba_from_hex(theme.panel_hex, 0.65f)
-           << ";\">"
-           << "<div style=\"position:absolute;left:12%;top:18%;width:76%;"
-           << "background-color:#ffffff;color:" << theme.text_hex << ";"
-           << "box-shadow:0 0 0 " << theme.focus_outline_px << "px " << theme.focus_hex << ";"
+    stream << "<div style=\"position:absolute;left:0;top:0;right:0;bottom:0;"
+           << "display:flex;align-items:center;justify-content:center;"
+           << "padding:" << (theme.spacing_unit_px * 3) << "px;"
+           << "background-color:" << css_rgba_from_hex(theme.panel_hex, 0.65f)
+           << ";box-sizing:border-box;\">"
+           << "<div style=\"display:block;width:76%;max-width:980px;min-width:420px;"
+           << "padding:" << theme.focus_outline_px << "px;background-color:" << theme.focus_hex
+           << ";border-radius:18px;box-sizing:border-box;\">"
+           << "<div style=\"display:flex;flex-direction:column;gap:" << theme.spacing_unit_px
+           << "px;background-color:#ffffff;color:" << theme.text_hex << ";"
            << "border-radius:14px;padding:" << (theme.spacing_unit_px * 2) << "px;box-sizing:border-box;\">"
-           << "<div style=\"font-size:" << theme.typography.dialog_title_px << "px;font-weight:bold;margin-bottom:" << theme.spacing_unit_px << "px;\">"
+           << "<div style=\"display:flex;flex-direction:column;gap:" << (theme.spacing_unit_px / 2) << "px;min-width:0;\">"
+           << "<div style=\"width:100%;font-size:" << theme.typography.dialog_title_px
+           << "px;font-weight:bold;line-height:1.15;white-space:normal;\">"
            << escape_rml(model.dialog->title)
-           << "</div>";
+           << "</div>"
+           << "<div style=\"display:flex;flex-direction:column;gap:" << (theme.spacing_unit_px / 2) << "px;min-width:0;\">";
 
     for (const auto& line : model.dialog->body_lines) {
-      stream << "<div style=\"font-size:" << theme.typography.body_text_px << "px;line-height:1.3;margin-bottom:"
-             << (theme.spacing_unit_px / 2) << "px;white-space:pre-wrap;\">"
+      stream << "<div style=\"width:100%;font-size:" << theme.typography.body_text_px
+             << "px;line-height:1.35;white-space:normal;\">"
              << escape_rml(line)
              << "</div>";
     }
 
-    stream << "<div style=\"display:flex;flex-direction:row;gap:" << theme.spacing_unit_px << "px;flex-wrap:wrap;margin-top:" << theme.spacing_unit_px << "px;\">";
+    stream << "</div></div>"
+           << "<div style=\"display:flex;flex-direction:row;gap:" << theme.spacing_unit_px
+           << "px;flex-wrap:wrap;margin-top:" << theme.spacing_unit_px << "px;\">";
     for (std::size_t index = 0; index < model.dialog->actions.size(); ++index) {
       const auto& action = model.dialog->actions[index];
       const std::string element_id = "dialog-item-" + std::to_string(index);
@@ -692,10 +701,10 @@ RenderedDocument build_document(
           element_id,
           escape_rml(action.label),
           "min-width:220px;text-align:center;",
-          focused,
-          theme);
+           focused,
+           theme);
     }
-    stream << "</div></div></div>";
+    stream << "</div></div></div></div>";
   }
 
   stream << "</div></body></rml>";
