@@ -494,8 +494,7 @@ int Application::run_graphical() const {
           try {
             disconnect_future->get();
             disconnect_future.reset();
-            runtime = RuntimeState{};
-            session.apply(navigate_to("welcome"));
+            return 0;
           } catch (const std::exception& error) {
             disconnect_future.reset();
             session.apply(navigate_to("disconnect-error", {{"message", error.what()}}));
@@ -857,8 +856,7 @@ int Application::run_normal() const {
         try {
           disconnect_future->get();
           disconnect_future.reset();
-          runtime = RuntimeState{};
-          session.apply(navigate_to("welcome"));
+          return 0;
         } catch (const std::exception& error) {
           disconnect_future.reset();
           session.apply(navigate_to("disconnect-error", {{"message", error.what()}}));
