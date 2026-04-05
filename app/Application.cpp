@@ -380,7 +380,7 @@ int Application::run_graphical() const {
 
       if (config_.runtime_mode == RuntimeMode::Normal && agent != nullptr &&
           (command == InputCommand::Tick || active_request.screen_id == "wifi-list" || active_request.screen_id == "status" ||
-           active_request.screen_id == "wifi-scan")) {
+           active_request.screen_id == "wifi-scan" || active_request.screen_id == "disconnect-wait")) {
         for (auto event = agent->poll_event(std::chrono::milliseconds(0)); event.has_value();
              event = agent->poll_event(std::chrono::milliseconds(0))) {
           apply_event(runtime, *event);
@@ -389,7 +389,8 @@ int Application::run_graphical() const {
         const auto now = Clock::now();
         if (now - last_status_refresh >= std::chrono::seconds(1) ||
             active_request.screen_id == "wifi-wait" ||
-            active_request.screen_id == "vpn-wait") {
+            active_request.screen_id == "vpn-wait" ||
+            active_request.screen_id == "disconnect-wait") {
           refresh_runtime_status(*agent, runtime);
           last_status_refresh = now;
         }
