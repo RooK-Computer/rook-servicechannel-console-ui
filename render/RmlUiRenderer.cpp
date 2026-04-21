@@ -844,21 +844,35 @@ struct RmlUiRenderer::Impl {
         SDL_RaiseWindow(window);
       }
 
-      if (is_kmsdrm && runtime_mode != app::RuntimeMode::Preview) {
+      const bool prefer_accelerated_renderer = is_kmsdrm && runtime_mode != app::RuntimeMode::Preview;
+      std::string accelerated_renderer_error;
+      renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+      if (renderer == nullptr) {
+        accelerated_renderer_error = SDL_GetError();
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-      } else {
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-        if (renderer == nullptr) {
-          renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-        }
       }
       if (renderer == nullptr) {
-        attempt_errors.push_back(driver + ": SDL renderer creation failed: " + SDL_GetError());
+        std::string error = driver + ": SDL renderer creation failed";
+        if (!accelerated_renderer_error.empty()) {
+          error += " after accelerated attempt: " + accelerated_renderer_error;
+          error += " | software fallback failed: " + std::string(SDL_GetError());
+        } else {
+          error += ": " + std::string(SDL_GetError());
+        }
+        attempt_errors.push_back(std::move(error));
         return false;
       }
 
       active_video_driver = driver;
       std::cerr << "SDL video driver: " << active_video_driver << '\n';
+      if (prefer_accelerated_renderer && !accelerated_renderer_error.empty()) {
+        std::cerr << "SDL renderer fallback for kmsdrm: software (" << accelerated_renderer_error << ")\n";
+      }
+
+      SDL_RendererInfo renderer_info{};
+      if (SDL_GetRendererInfo(renderer, &renderer_info) == 0 && renderer_info.name != nullptr) {
+        std::cerr << "SDL renderer: " << renderer_info.name << '\n';
+      }
       return true;
     };
 
