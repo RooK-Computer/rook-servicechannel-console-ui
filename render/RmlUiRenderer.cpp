@@ -844,60 +844,18 @@ struct RmlUiRenderer::Impl {
         SDL_RaiseWindow(window);
       }
 
-      const char* configured_render_driver = std::getenv("SDL_RENDER_DRIVER");
-      const bool has_configured_render_driver = configured_render_driver != nullptr && configured_render_driver[0] != '\0';
-      const bool prefer_kmsdrm_gles2 =
-          is_kmsdrm && runtime_mode != app::RuntimeMode::Preview && !has_configured_render_driver;
-      const Uint32 accelerated_renderer_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
-      std::vector<std::string> renderer_attempt_errors;
-      std::string selected_renderer_attempt = "accelerated";
-      const auto restore_render_driver = [&] {
-        if (has_configured_render_driver) {
-          ::setenv("SDL_RENDER_DRIVER", configured_render_driver, 1);
-        } else {
-          ::unsetenv("SDL_RENDER_DRIVER");
-        }
-      };
-      const auto try_renderer = [&](const char* named_driver, Uint32 flags, std::string_view attempt_name) {
-        if (named_driver != nullptr && named_driver[0] != '\0') {
-          ::setenv("SDL_RENDER_DRIVER", named_driver, 1);
-        } else {
-          restore_render_driver();
-        }
-
-        renderer = SDL_CreateRenderer(window, -1, flags);
-        if (renderer == nullptr) {
-          renderer_attempt_errors.emplace_back(std::string(attempt_name) + ": " + SDL_GetError());
-          return false;
-        }
-
-        selected_renderer_attempt = attempt_name;
-        return true;
-      };
-
-      if (prefer_kmsdrm_gles2) {
-        try_renderer("opengles2", accelerated_renderer_flags, "opengles2");
-      }
+      const bool prefer_accelerated_renderer = is_kmsdrm && runtime_mode != app::RuntimeMode::Preview;
+      std::string accelerated_renderer_error;
+      renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
       if (renderer == nullptr) {
-        try_renderer(nullptr, accelerated_renderer_flags, "accelerated");
-      }
-      if (renderer == nullptr) {
-        restore_render_driver();
+        accelerated_renderer_error = SDL_GetError();
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-        if (renderer != nullptr) {
-          selected_renderer_attempt = "software";
-        } else {
-          renderer_attempt_errors.emplace_back(std::string("software: ") + SDL_GetError());
-        }
       }
-      restore_render_driver();
       if (renderer == nullptr) {
         std::string error = driver + ": SDL renderer creation failed";
-        if (!renderer_attempt_errors.empty()) {
-          error += " after attempts";
-          for (const auto& attempt_error : renderer_attempt_errors) {
-            error += " [" + attempt_error + "]";
-          }
+        if (!accelerated_renderer_error.empty()) {
+          error += " after accelerated attempt: " + accelerated_renderer_error;
+          error += " | software fallback failed: " + std::string(SDL_GetError());
         } else {
           error += ": " + std::string(SDL_GetError());
         }
@@ -907,12 +865,8 @@ struct RmlUiRenderer::Impl {
 
       active_video_driver = driver;
       std::cerr << "SDL video driver: " << active_video_driver << '\n';
-      if (prefer_kmsdrm_gles2 && selected_renderer_attempt != "opengles2" && !renderer_attempt_errors.empty()) {
-        std::cerr << "SDL renderer fallback for kmsdrm: " << selected_renderer_attempt;
-        for (const auto& attempt_error : renderer_attempt_errors) {
-          std::cerr << " [" << attempt_error << "]";
-        }
-        std::cerr << '\n';
+      if (prefer_accelerated_renderer && !accelerated_renderer_error.empty()) {
+        std::cerr << "SDL renderer fallback for kmsdrm: software (" << accelerated_renderer_error << ")\n";
       }
 
       SDL_RendererInfo renderer_info{};

@@ -72,7 +72,7 @@ make clean
 * SDL2 and FreeType are required system dependencies for the graphical host.
 * JSON handling for the agent IPC is vendored project-locally via `third_party/nlohmann/json.hpp`.
 * The default runtime path is graphical via SDL2 + RmlUi; the terminal renderer remains only as a diagnostic fallback if the graphical host cannot start.
-* On the target path with `SDL_VIDEODRIVER=kmsdrm`, normal mode now tries `opengles2` first, then a generic accelerated SDL renderer, and only falls back to software rendering if both cannot be created.
+* On the target path with `SDL_VIDEODRIVER=kmsdrm`, normal mode now tries a hardware-accelerated SDL renderer first and only falls back to software rendering if that renderer cannot be created.
 * Resource lookup is resilient to starting the binary from the repository root or from `build/`.
 * The public packaged launcher is `/usr/bin/rook-ui`; packaged UI resources live under `/usr/share/rook-console-ui/resources`.
 * The packaged launcher also exports `LD_LIBRARY_PATH=/usr/lib/rook-console-ui` so the bundled `librmlui.so` is found at runtime.
