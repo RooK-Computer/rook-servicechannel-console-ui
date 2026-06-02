@@ -1,0 +1,264 @@
+Briefing: separates Discovery-Projekt fuer eine zentrale UI-/Layout-Library
+=======================================================================
+
+Zweck
+-----
+
+Dieses Briefing ist fuer ein neues, leeres Repository gedacht. Dort soll
+ein frischer Agent ein separates Architektur- und Discovery-Projekt
+bearbeiten, das prueft, ob aus mehreren RooK-nahen Projekten eine
+gemeinsame UI-/Layout-Library entstehen soll.
+
+Wichtig: Dieses Vorhaben ist bewusst von diesem Repo getrennt.
+Es geht nicht darum, die bestehende RooK Console UI einfach direkt zu
+extrahieren, sondern darum, die richtige gemeinsame Abstraktion zu finden.
+
+
+Ausgangslage
+------------
+
+Im RooK-Umfeld entstehen mehrere Projekte mit aehnlichen Layout-
+Anforderungen. Ein Teil der Projekte ist in C++, ein Teil in Go.
+Zusaetzlich sollen Frontend-Designer an Layout und Styling mitarbeiten
+koennen, ohne C++-Code schreiben zu muessen.
+
+In diesem Repo wurde bereits eine produktive SDL2-/RmlUi-basierte UI
+gebaut. Daraus ist besonders wichtig:
+
+1. Es gibt bereits echte produktive Screens.
+2. Es gibt ein funktionierendes Fokus- und Input-Modell.
+3. Es gibt ein reales On-Screen-Keyboard.
+4. Es gibt bereits die Diskussion, ob Layouts und Styles dateibasiert
+   ausgelagert werden sollten.
+
+
+Wichtige Klarstellung
+---------------------
+
+Das Ziel dieses neuen Vorhabens ist noch nicht automatisch:
+
+* "Wir bauen jetzt definitiv die Library"
+
+sondern zuerst:
+
+* "Wir pruefen belastbar, ob eine gemeinsame Library wirklich sinnvoll ist,
+   wie ihr Kern aussehen muesste und wie hoch der Preis dafuer waere."
+
+
+Warum dieses Vorhaben jetzt sinnvoll ist
+----------------------------------------
+
+Jetzt ist ein guter Zeitpunkt fuer ein separates Discovery-Projekt, weil:
+
+* mehrere Projekte parallel entstehen,
+* Designer frueh beruecksichtigt werden sollen,
+* die Gefahr falscher frueher Extraktion bewusst gesehen wird,
+* und in diesem Repo bereits genug reale UI-Artefakte existieren, um nicht
+  rein spekulativ zu planen.
+
+
+Explizite Pflichtannahme fuer dieses Discovery-Projekt
+------------------------------------------------------
+
+Die in diesem Repo entstandene On-Screen-Tastatur ist ein ausdruecklicher
+Kandidat fuer die spaetere zentrale Library.
+
+Das heisst:
+
+* Die Tastatur darf im Discovery-Projekt nicht als Randthema behandelt
+  werden.
+* Es soll explizit geprueft werden, wie eine wiederverwendbare
+  On-Screen-Keyboard-Komponente in einem gemeinsamen System aussehen kann.
+* Wenn die zentrale Library entsteht, soll genau diese Art von Tastatur zu
+  den Referenzkomponenten gehoeren.
+
+
+Reale Referenz aus diesem Repo
+------------------------------
+
+Die aktuelle On-Screen-Tastatur in diesem Repo hat mindestens diese
+Eigenschaften:
+
+* QWERTZ-Basislayout
+* Alt-Modus fuer Sonderzeichen
+* Shift-Logik
+* Caps-Logik
+* Unicode-faehiges Loeschen des letzten Zeichens
+* Gamepad-/Richtungsfokus ueber ein Raster
+* Fokus-Rueckfuehrung ueber `focus-key`
+* Einbindung in denselben Screen-/Navigationspfad wie der Rest der UI
+* spezifisches Verhalten fuer "B":
+  * bei vorhandener Eingabe letztes Zeichen loeschen
+  * bei leerer Eingabe zurueck
+
+Diese Tastatur ist damit nicht nur ein "Widget", sondern ein gutes
+Pruefobjekt fuer:
+
+* Fokusmodell
+* Input-Abstraktion
+* Layouting fuer dynamische Raster
+* sprach-/layoutabhaengige Keymaps
+* Zustandsmodell fuer UI-Komponenten
+
+
+Arbeitsauftrag an das neue Repo / den frischen Agenten
+------------------------------------------------------
+
+Bitte dieses Thema als eigenstaendiges Architekturvorhaben behandeln und
+nicht als lokalen Refactor eines bestehenden Produkts.
+
+Der Agent soll belastbar beantworten:
+
+1. Gibt es einen echten gemeinsamen Kern ueber mehrere Projekte?
+2. Welche Ebene sollte zentralisiert werden?
+   * nur Design-Tokens und Styles?
+   * Styles plus Layout-Templates?
+   * wiederverwendbare Komponenten?
+   * auch Fokus, Input und Navigation?
+   * auch Runtime- und Datenbindungsmodell?
+3. Ist RmlUi dafuer weiterhin die richtige Grundlage?
+4. Wie realistisch sind Bindings fuer Go?
+5. Was waere ein vernuenftiger kleinster gemeinsamer Nenner, ohne alle
+   Projekte in schlechte Kompromisse zu zwingen?
+
+
+Zu pruefende Architekturfragen
+------------------------------
+
+1. Abstraktionsschnitt
+
+* Was ist wirklich gemeinsam?
+* Was ist nur oberflaechlich aehnlich, aber im Verhalten produktspezifisch?
+* Wo endet "Layout-System" und wo beginnt "App-Framework"?
+
+2. Rendering- und Ressourcenmodell
+
+* Bleibt RmlUi die zentrale Rendering-/Layout-Engine?
+* Sollen Layouts und Styles dateibasiert sein?
+* Wie sehen Templates, Design-Tokens und Asset-Pfade projektuebergreifend aus?
+* Welche Teile duerfen weiterhin hostsprachlich erzeugt werden?
+
+3. Komponentenmodell
+
+* Welche Komponenten sollen zentral sein?
+* Welche davon sind nur visuell?
+* Welche brauchen eigenes Interaktionsverhalten?
+* Wie wird die On-Screen-Tastatur modelliert:
+  * nur Layout-Template?
+  * konfigurierbare Komponente?
+  * Komponente plus Keymap-/State-Engine?
+
+4. Fokus-, Navigations- und Input-Modell
+
+* Lohnt sich eine gemeinsame Fokusengine?
+* Lassen sich Gamepad, Tastatur und ggf. Fernbedienungs-/Controller-
+  Eingaben sauber generalisieren?
+* Wie stark unterscheiden sich die Screen-Lifecycles zwischen den Projekten?
+* Soll Navigation Teil der Library sein oder im Host-Projekt bleiben?
+
+5. Sprachgrenzen / Bindings
+
+* Welche API muss stabil sein, damit C++- und Go-Projekte denselben Kern
+  nutzen koennen?
+* Ist eine C-ABI-Schicht sinnvoller als direkte Go-Bindings?
+* Welche Teile sollten datengetrieben ueber Ressourcen beschrieben sein,
+  damit Sprachbindings moeglichst duenn bleiben?
+
+6. Tooling und Zusammenarbeit
+
+* Wie koennen Designer ohne C++ an Styles und Layouts arbeiten?
+* Wie werden Preview, Visual Review und Golden Tests organisiert?
+* Wie werden Assets, Fonts und Themes versioniert?
+
+
+Explizite Nicht-Ziele
+---------------------
+
+Das Discovery-Projekt soll zunaechst nicht:
+
+* vorschnell eine produktionsreife Library festschreiben,
+* sofort alle Projekte auf einen gemeinsamen Kern zwingen,
+* blind die bestehende C++-Architektur dieses Repos herausloesen,
+* eine fruehe Go-Binding-Strategie entscheiden, bevor der API-Schnitt klar ist.
+
+
+Erwartete Artefakte aus dem Discovery-Projekt
+---------------------------------------------
+
+Der Agent im neuen Repo soll am Ende mindestens liefern:
+
+1. eine Problemdefinition und Zielabgrenzung
+2. einen Vergleich mehrerer Architekturvarianten
+3. eine Bewertung, was zentralisiert werden sollte und was nicht
+4. eine explizite Aussage zur Rolle von RmlUi
+5. eine explizite Aussage zur Rolle von Go-Bindings
+6. ein erstes Zielbild fuer die zentrale On-Screen-Tastatur
+7. eine Empfehlung fuer einen kleinen, realistischen Spike
+8. klare Abbruchkriterien, falls die gemeinsame Library sich als unpassend
+   herausstellt
+
+
+Empfohlene Arbeitsweise im neuen Repo
+-------------------------------------
+
+1. Nicht mit Implementierung beginnen.
+2. Erst mindestens zwei bis drei reale Projektfaelle vergleichen.
+3. Gemeinsame Muster und harte Unterschiede schriftlich festhalten.
+4. Danach nur einen kleinen Spike planen:
+   * z. B. Design-Tokens + RCSS + eine einfache Komponente + On-Screen-
+     Keyboard-Referenzmodell
+5. Fokus/Input erst dann generalisieren, wenn klar ist, dass die Projekte
+   dort wirklich denselben Kern brauchen.
+
+
+Vorlaeufige Leitthese
+---------------------
+
+Wahrscheinlich ist nicht sofort ein vollstaendiges gemeinsames UI-Framework
+der richtige erste Schritt, sondern eher diese Reihenfolge:
+
+1. gemeinsame Design-Tokens
+2. gemeinsame Styles / Layout-Primitives
+3. ausgewahlte gemeinsame Komponenten
+4. danach erst pruefen, ob Fokus/Input/Navigation ebenfalls zentralisiert
+   werden sollten
+
+Die On-Screen-Tastatur ist dabei ein besonders wertvoller Testfall, weil sie
+zwischen "wiederverwendbare Komponente" und "produktnahe Interaktionslogik"
+liegt.
+
+
+Wichtige Startfrage fuer den frischen Agenten
+---------------------------------------------
+
+Bitte zuerst sauber beantworten:
+
+"Wollen wir eine gemeinsame Layout-/Styling-Basis bauen oder ein
+projektuebergreifendes UI-Framework mit Runtime, Fokus und Input?"
+
+Das ist die entscheidende Weichenstellung.
+
+
+Relevante Referenzen aus diesem Repo
+------------------------------------
+
+* `docs/rook-ui-konzept.md`
+* `spec/implementation/01-rook-ui-status.md`
+* `render/RmlUiRenderer.cpp`
+* `app/Application.cpp`
+* `app/FocusEngine.cpp`
+* `screens/KeyboardScreen.cpp`
+* `components/UiModels.hpp`
+* `resources/`
+
+
+Besonders wichtige Detailreferenzen
+-----------------------------------
+
+* Die aktuelle Diskussion zur Auslagerung von Layout/Styles und zur moeglichen
+  projektuebergreifenden Library ist in der Session-Planung festgehalten.
+* Die Keyboard-Logik in `screens/KeyboardScreen.cpp` ist Referenzmaterial fuer
+  einen spaeter moeglichen zentralen Keyboard-Baustein.
+* Der Komponentenstatus unter `spec/implementation/01-rook-ui-status.md`
+  dokumentiert, dass das On-Screen-Keyboard im aktuellen Produktpfad real und
+  nicht nur ein Stub ist.
